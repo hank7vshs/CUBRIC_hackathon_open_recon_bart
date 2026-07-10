@@ -1,0 +1,46 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Start server",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/server/server.py",
+      "cwd": "${workspaceFolder}/server",
+      "args": [
+        "--or-module",
+        "${env:OR_MODULE}"
+      ],
+      "env": {
+        "BART_TOOLBOX_PATH": "/container/bart"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Run client (r2ci demo data)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/client/client.py",
+      "cwd": "${workspaceFolder}/client",
+      "args": [
+        "${workspaceFolder}/test/data/tse_r2ci.h5",
+        "-p",
+        "9002",
+        "-o",
+        "${workspaceFolder}/client/out.h5"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Server + client",
+      "configurations": [
+        "Start server",
+        "Run client (r2ci demo data)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "general": {
+    "name": { "en": "Open Recon I2I App" },
+    "version": "1.0.0",
+    "vendor": "SHSTeam",
+    "information": { "en": "This is a tool to reconstruct datasets with BART." },
+    "id": "OpenReconI2I",
+	"regulatory_information":{
+		"device_trade_name":"OpenReconI2I",
+        "production_identifier":"1.0.0",
+        "manufacturer_address":"Erlangen",
+        "made_in":"Germany",
+        "manufacture_date":"2025/09/05",
+        "material_number":"1337",
+        "gtin":"1337",
+        "udi":"000000000000000000000000000",
+        "safety_advices":"",
+        "special_operating_instructions":"",
+        "additional_relevant_information":""
+	}
+  },
+  "reconstruction": {
+    "transfer_protocol": {
+      "protocol": "ISMRMRD",
+      "version": "1.4.1"
+    },
+    "port": 9002,
+    "emitter": "image",
+    "injector": "image",
+    "can_process_adjustment_data": false,
+    "can_use_gpu": true,
+    "min_count_required_gpus": 0,
+    "min_required_gpu_memory": 0,
+    "min_required_memory": 4096,
+    "min_count_required_cpu_cores": 1,
+    "content_qualification_type": "RESEARCH",
+	"require_readout_filter_off": true,
+	"channel_compression":
+	{
+		"require_state":"off",
+		"require_number_target_channels": 12
+	}
+  },
+  "parameters": [
+    {
+      "id": "sendOriginalBoolId",
+      "type": "boolean",
+      "label": {
+        "en": "Send Original"
+      },
+      "information": {
+        "en": "If enabled, the unmodified input image is returned instead of the contrast-inverted result."
+      },
+      "default": false
+    }
+  ]
+}

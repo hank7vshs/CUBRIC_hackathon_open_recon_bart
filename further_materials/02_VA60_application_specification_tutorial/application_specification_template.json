@@ -1,0 +1,39 @@
+{
+    "general": {
+        "id": "TODO",
+        "version": "1.0.0",
+        "vendor": "TODO",
+        "name": {
+            "en": "TODO"
+        },
+        "information": {
+            "en": "TODO"
+        },
+        "regulatory_information": {
+            "device_trade_name": "",
+            "gtin": "",
+            "made_in": "",
+            "manufacture_date": "",
+            "manufacturer_address": "",
+            "material_number": "",
+            "production_identifier": "",
+            "safety_advices": "",
+            "udi": "",
+            "special_operating_instructions": "",
+            "additional_relevant_information": ""
+        }
+    },
+    "reconstruction": {
+        "emitter": "image",
+        "injector": "image",
+        "transfer_protocol": {
+            "protocol": "ISMRMRD",
+            "version": "1.4.1"
+        },
+        "port": 9002,
+        "can_use_gpu": false,
+        "min_required_memory": 500,
+        "min_count_required_cpu_cores": 1
+    },
+    "parameters": []
+}

@@ -1,0 +1,7 @@
+{
+    "parameters": {
+        "numCoilIntId": -1,
+        "picsFlagsId": "-e -S",
+        "sendOriginalBoolId": false
+    }
+}

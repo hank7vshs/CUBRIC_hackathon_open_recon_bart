@@ -1,0 +1,55 @@
+{
+    "name": "open-recon-devcon",
+
+    "containerEnv": {
+        "OR_MODULE": "r2ci_bart"
+    },
+
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            "OR_GPU_SUPPORT": "0"
+        }
+    },
+
+    "remoteEnv": {
+        "BART_TOOLBOX_PATH": "/container/bart",
+        "TOOLBOX_PATH": "/container/bart",
+        "OMP_NUM_THREADS": "1",
+        "PATH": "/container/bart:${containerEnv:PATH}"
+    },
+
+    "postCreateCommand": "git config --global core.editor vim && bash .devcontainer/install_extra.sh",
+    "postStartCommand": "sudo bash -c 'if [ -f /host-ssl-root/cert.pem ]; then echo \"macOS detected: unmounting and processing cert bundle\"; sudo umount /usr/local/share/ca-certificates 2>/dev/null || true; mkdir -p /usr/local/share/ca-certificates; csplit -s -z -f /tmp/cert- /host-ssl-root/cert.pem \"/-----BEGIN CERTIFICATE-----/\" \"{*}\" && for f in /tmp/cert-*; do if grep -q \"BEGIN CERTIFICATE\" \"$f\" 2>/dev/null; then cp \"$f\" \"/usr/local/share/ca-certificates/$(basename $f).crt\"; fi; done && rm -f /tmp/cert-*; if [ -d ${containerWorkspaceFolder}/.devcontainer/certs ]; then find ${containerWorkspaceFolder}/.devcontainer/certs -type f \\( -name \"*.pem\" -o -name \"*.crt\" \\) -exec cp {} /usr/local/share/ca-certificates/ \\; 2>/dev/null || true; fi; fi' && sudo update-ca-certificates && nohup bash -c 'sudo dockerd > /tmp/dockerd.log 2>&1 &' > /tmp/nohup.log 2>&1",
+
+    "mounts": [
+        "source=/etc/ssl/certs,target=/usr/local/share/ca-certificates,type=bind,readonly",
+        "source=/etc/ssl,target=/host-ssl-root,type=bind,readonly"
+    ],
+
+    "runArgs": [
+        "--privileged"
+        // Uncomment the next two lines when enabling GPU (OR_GPU_SUPPORT = "1")
+        // , "--gpus", "all"
+    ],
+
+    "customizations": {
+        "vscode": {
+            // Add the IDs of extensions you want installed when the container is created.
+            "extensions": [
+                "ms-python.debugpy",
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-toolsai.jupyter",
+                "streetsidesoftware.code-spell-checker",
+                "yzhang.markdown-all-in-one",
+                "tomoki1207.pdf",
+                "ms-azuretools.vscode-containers"
+            ],
+
+            "settings": { 
+                "terminal.integrated.defaultProfile.linux": "bash"
+            }
+        }
+    }
+}
