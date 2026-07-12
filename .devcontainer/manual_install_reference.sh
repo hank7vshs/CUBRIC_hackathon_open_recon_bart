@@ -6,7 +6,7 @@
 # to the running devcontainer -- this is a teaching exercise, not automation.
 #
 # Tested and confirmed working against:
-#   .devcontainer/Dockerfile (python:3.12-slim-bullseye / Debian bullseye)
+#   .devcontainer/Dockerfile (python:3.11-slim-bullseye / Debian bullseye)
 
 set -e
 
@@ -48,3 +48,22 @@ echo 'export PATH="/container/mrtrix3/bin:$PATH"'  >> ~/.bashrc
 # NOTE: after running the MRtrix3 section above, PATH changes only apply to
 # NEW shells. In the same terminal, run `source ~/.bashrc` (or open a fresh
 # terminal) before calling `mrconvert`/`mrdenoise`/etc.
+
+
+# installing Supervised_RNS_dMRI package from GitHub with all dependencies as importable module
+# because it is not available on PyPI, we install it directly from GitHub using pip.
+# luckily, it includes a pyproject.toml file, so pip will automatically install all dependencies listed there.
+# we need to add the local bin directory to PATH so that the package's command-line tools are available in the shell
+# This will not be necessary for the final server implementation, as it will not have users but only root
+# access, and the package will be installed system-wide.
+sudo apt-get update -qq
+sudo apt-get install -y --no-install-recommends build-essential
+pip install --no-cache-dir git+https://github.com/Bradley-Karat/Supervised_RNS_dMRI.git
+
+# Non-root pip falls back to a --user install (no write access to system
+# site-packages), landing console scripts in ~/.local/bin instead of a
+# directory already on PATH. Export now for this shell, and persist to
+# ~/.bashrc (matching the MRtrix3 pattern above) so future shells pick it
+# up too -- without this, ~/.local/bin is lost the moment this terminal closes.
+export PATH="$HOME/.local/bin:$PATH"
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc

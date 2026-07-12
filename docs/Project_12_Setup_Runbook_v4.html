@@ -104,6 +104,8 @@
     <li><a href="#s11">Install script &amp; from-scratch replay</a></li>
     <li><a href="#s12">Bugs found during first test pass</a></li>
     <li><a href="#s13">Student walkthrough — first test run</a></li>
+    <li><a href="#s14">Supervised_RNS_dMRI dependency check (supervisor-only)</a></li>
+    <li><a href="#s15">Module integration roadmap — next steps for students</a></li>
   </ol>
 </nav>
 
@@ -460,10 +462,84 @@ Running Test:
   <p class="soft">Not covered here: testing inside <code>server/Dockerfile</code> itself (<code>run_docker.sh</code>/<code>test_docker.sh</code>). That's the Stage 2 check from <code>docs/Dockerfile-Comparison.md</code> — students move to it once the module behaves correctly in host-mode, not before.</p>
 </section>
 
+<section class="block" id="s14">
+  <div class="sec-head"><span class="sec-num">14</span><h2 class="sec-title">Supervised_RNS_dMRI dependency check (supervisor-only)<span class="newbadge">v4</span></h2></div>
+
+  <div class="callout warn">
+    <b>Not for students.</b> Same treatment as MRtrix3 (§11/§13): installing this manually, in the devcontainer, <i>is</i> the hackathon exercise — figuring out its dependency chain and integrating it into a real OpenRecon module is the actual challenge, not something to hand over as a script. This section exists purely so a rebuilt/wiped devcontainer can be brought back to this checkpoint quickly, without re-deriving the same commands from scratch.
+  </div>
+
+  <p>This installs the package and its full dependency chain (<code>DiffSimGen</code>, the <code>dmipy</code> fork, <code>dipy</code>, <code>snakemake==7.25.0</code>, <code>snakebids==0.14.0</code>, <code>scikit-learn</code>, <code>scikit-image</code>, <code>nibabel</code>, <code>scipy</code>, <code>PuLP</code>, <code>docutils</code> — all resolved transitively from its own <code>pyproject.toml</code>). It does <b>not</b> clone the source — <code>pip install git+...</code> builds from a temporary internal clone and discards it, leaving only the installed package, importable and runnable via its console-script entry point, with no browsable/editable source folder. A separate <code>git clone</code> (of both this repo and <code>DiffSimGen</code>) is a distinct, later step for whoever actually adapts the code into <code>server/modules/supervised_rns_dmri/</code>.</p>
+
+  <pre><span class="cm"># Compiler toolchain — needed for a few packages in the chain (datrie,
+# connection-pool, stopit, docopt, some cvxpy solver backends) that build
+# native extensions from source rather than shipping prebuilt wheels.
+# Likely a no-op in this devcontainer already (gcc/g++/make are already
+# installed), but harmless and confirmed needed from a bare base image.</span>
+sudo apt-get update -qq
+sudo apt-get install -y --no-install-recommends build-essential
+
+<span class="cm"># Installs Supervised_RNS_dMRI + its full dependency chain in one shot</span>
+pip install --no-cache-dir git+https://github.com/Bradley-Karat/Supervised_RNS_dMRI.git</pre>
+
+  <p class="soft">Confirmed working in throwaway <code>python:3.11-slim-bullseye</code> friction tests against the pinned <code>numpy==2.4.2</code> and <code>matplotlib==3.9.2</code> (§10) before running it here for real — <code>dmipy</code> specifically hard-requires Python <code>&lt;3.12</code> in its own package metadata, which is why the Python bump (§10) had to happen before any of this could even install.</p>
+
+  <div class="callout">
+    <b>Note — <code>pip install git+...</code> vs. <code>git clone</code>, and why not Poetry:</b>
+    <p style="margin-bottom:8px;"><code>pip install git+https://...</code> clones the repo into a temporary directory, builds a wheel from its <code>pyproject.toml</code>, installs that wheel into <code>site-packages</code>, then discards the clone — you get an importable/runnable package, but no browsable or editable source folder. That only works at all because both <code>Supervised_RNS_dMRI</code> and <code>DiffSimGen</code> declare proper packaging metadata (<code>[tool.poetry]</code> + <code>poetry-core</code>); a repo without that (loose scripts/notebooks, no <code>pyproject.toml</code>/<code>setup.py</code>) can only be used via an actual <code>git clone</code>, since pip would have no way to build a wheel from it. The maintainers' own README only documents <code>git clone</code> + <code>poetry install</code> — partly because their <code>poetry.lock</code> (exact transitive-dependency pinning) only applies when the repo is actually cloned alongside it, and partly because this is research code meant to be read/modified, not consumed as an opaque library — which is exactly what the hackathon exercise requires too.</p>
+    <p style="margin:0;">We deliberately used plain <code>pip install</code> here rather than Poetry, for a reason specific to this codebase's architecture: <code>server.py</code> dispatches every module from <i>one shared Python environment</i> (no per-module venv), so the real question was whether this dependency chain installs cleanly <i>inside that same shared environment</i> alongside the already-pinned <code>numpy</code>/<code>matplotlib</code>. Installing via Poetry would have resolved everything inside its own isolated venv instead, hiding exactly the kind of conflict (§10's <code>matplotlib</code> downgrade) this check exists to surface. Poetry's environment-isolation model also doesn't fit here for the same reason Miniconda was dropped for MRtrix3 (§11) — an extra isolated environment just adds a bridging problem (subprocess calls, <code>poetry run</code>) that this single-process server architecture doesn't need.</p>
+  </div>
+</section>
+
+<section class="block" id="s15">
+  <div class="sec-head"><span class="sec-num">15</span><h2 class="sec-title">Module integration roadmap — next steps for students<span class="newbadge">v4</span></h2></div>
+
+  <p>Once §13's framework checkpoint passes and §14 confirms the dependency chain installs cleanly, this is the actual hackathon exercise: integrating <code>Supervised_RNS_dMRI</code>'s model-fitting logic into a real <code>server/modules/supervised_rns_dmri/</code> module. This is a roadmap of the logical steps, not a tested recipe — unlike earlier sections, none of this has been built yet.</p>
+
+  <ol class="step-list">
+    <li>
+      <h4>1. This is an image-to-image workflow, not raw k-space</h4>
+      <p>Diffusion model fitting operates on already-reconstructed DWI volumes, not raw acquisitions. <code>i2i_invertcontrast</code> is the template to start from, not <code>r2ci_bart</code> — the module will receive a stream of <code>ismrmrd.Image</code> messages, not <code>ismrmrd.Acquisition</code>.</p>
+    </li>
+    <li>
+      <h4>2. Bridge the core format mismatch: MRD streams per-volume; the tool expects one 4D file on disk</h4>
+      <p>MRD sends one <code>ismrmrd.Image</code> message per diffusion volume/slice. <code>Supervised_RNS_dMRI</code> is a BIDS app expecting a single 4D NIfTI (<code>x, y, z, gradient-direction</code>) plus <code>.bval</code>/<code>.bvec</code> sidecar files on disk. Buffer every incoming image for the series (same accumulation pattern <code>i2i_invertcontrast.py</code> already uses), stack once complete, write out via <code>nibabel</code> — already in the dependency chain, no new tool needed for this step.</p>
+    </li>
+    <li>
+      <h4>3. Where do b-values/b-vectors actually come from, and what do they get used for?</h4>
+      <p><b>Format and usage, traced through the actual source</b> (<code>prepare_data_and_noisemaps.py</code>, <code>run_model_fitting.py</code>, <code>normalize_noisemap.py</code>): both files are loaded with plain <code>numpy.loadtxt()</code> — standard FSL-style text, exactly what MRtrix3's <code>mrconvert -export_grad_fsl</code> produces. <code>bvals</code> identifies b=0 volumes (for signal normalization) and groups directions into b-shells; <code>bvecs</code> is only used to direction-average each shell via a spherical-harmonics fit <i>before</i> model fitting — the final trained Random Forest/MLP itself only consumes the normalized, direction-averaged signal, not raw per-voxel gradient directions. The noisemap input is expected as an <i>already-computed</i> MP-PCA estimate (the script loads it, doesn't compute it) — strong evidence MRtrix3's <code>dwidenoise</code> is the intended upstream source.</p>
+      <p><b>Where this metadata comes from on a real scanner:</b> MRD has no dedicated b-value/gradient-direction field — the DICOM instinct is the right one here. It would have to ride in through the same kind of vendor/private-tag mechanism MRD offers: <code>userParameterLong</code>/<code>userParameterDouble</code>/<code>userParameterString</code> at the header level, or per-image <code>Meta</code> attributes (already used elsewhere in this repo — <code>r2ci_bart.py</code> reads <code>BitsStored</code> exactly this way).</p>
+      <div class="callout">
+        <b>Scope decision for this hackathon:</b> since the deployment target is a server tested against a local <code>.h5</code> client (§13's own test harness), not a live scanner, solving the genuine custom-field extraction problem is explicitly <b>out of scope</b> here. Simpler options, roughly in order of protocol-realism vs. ease: (a) bundle <code>.bval</code>/<code>.bvec</code>/mask/noisemap files directly alongside the test <code>.h5</code> in <code>test/data/</code>, read by convention; (b) pass them through the existing <code>ui_data</code> JSON channel, the same mechanism already used for <code>numCoilIntId</code>/<code>picsFlagsId</code>; (c) skip supplying mask/noisemap externally at all — compute them on the fly from the incoming DWI images via MRtrix3 (<code>dwi2mask</code>, <code>dwidenoise</code>). <b>Trade-off to keep visible, not gloss over:</b> option (a) specifically means the resulting module isn't scanner-deployable as-is — a real scanner has no mechanism to drop extra files onto the server's disk at a fixed path. Fine for proving out the integration in three days; worth a one-line note wherever this module's own Readme ends up describing its limitations.
+      </div>
+    </li>
+    <li>
+      <h4>4. Brain mask and noise map — MRtrix3's actual role</h4>
+      <p><code>dwi2mask</code> for the brain mask, <code>dwidenoise</code>'s MP-PCA residual for the noise estimate — both feed directly into what <code>prepare_data_and_noisemaps.py</code> already expects as inputs, per point 3 above.</p>
+    </li>
+    <li>
+      <h4>5. Call the model-fitting logic — vendored function call, not subprocess</h4>
+      <p>Once the temp BIDS-like folder exists, either call the extracted/adapted Python functions directly (clean, no per-connection subprocess/file-I/O overhead) or shell out to the CLI as a stopgap (<code>subprocess.run([...])</code>) to get something working end-to-end before optimizing.</p>
+    </li>
+    <li>
+      <h4>6. Convert output parameter maps back to MRD Images</h4>
+      <p><code>Supervised_RNS_dMRI</code> writes NIfTI parameter maps to disk — read them back with <code>nibabel</code>, convert to <code>ismrmrd.Image.from_array(...)</code> (mirroring exactly what <code>r2ci_bart.py</code>/<code>i2i_invertcontrast.py</code> already do: <code>setHead()</code>, <code>field_of_view</code>, <code>Meta</code> attributes, <code>image_index</code>), and <code>connection.send_image()</code>.</p>
+    </li>
+    <li>
+      <h4>7. Define scanner UI parameters in <code>doc/appl_spec.json</code></h4>
+      <p>Which model to fit, output map selection, etc. — following the existing module pattern.</p>
+    </li>
+    <li>
+      <h4>8. Test incrementally, cheapest case first</h4>
+      <p>Get the buffering/format-conversion pipeline working with a pass-through (echo the DWI images back unchanged) <i>before</i> wiring in the actual model-fitting call — isolates "is the MRD↔NIfTI bridge correct" from "does the science work," same philosophy as starting with <code>i2i_invertcontrast</code> before <code>r2ci_bart</code> in §13.</p>
+    </li>
+  </ol>
+</section>
+
 </div>
 
 <footer>
-  v4 — added Python 3.11 + <code>--chown</code> fix to §10, bugs found during first test pass (§12), and the student first-test-run walkthrough (§13) · companion to Project #12 — Framework Description and <code>docs/Dockerfile-Comparison.md</code> (explain the "why" behind each step here) · amend freely as the actual sequence evolves
+  v4 — added Python 3.11 + <code>--chown</code> fix to §10, bugs found during first test pass (§12), the student first-test-run walkthrough (§13), the supervisor-only Supervised_RNS_dMRI dependency check (§14), and the module integration roadmap for students (§15) · companion to Project #12 — Framework Description and <code>docs/Dockerfile-Comparison.md</code> (explain the "why" behind each step here) · amend freely as the actual sequence evolves
 </footer>
 
 </body>
