@@ -22,7 +22,7 @@ RUN pip install --upgrade pip
 RUN pip install h5py==3.12.1 --prefer-binary
 RUN pip install ismrmrd==1.14.1
 
-RUN pip install --no-cache-dir matplotlib==3.10.8 pydicom==3.0.1 numpy==2.4.2 check-jsonschema==0.33.3 pypulseq
+RUN pip install --no-cache-dir matplotlib==3.9.2 pydicom==3.0.1 numpy==2.4.2 check-jsonschema==0.33.3 pypulseq
 
 # Dependencies
 RUN apt-get update -qq && apt-get upgrade -y -qq && apt-get install -qq -y \

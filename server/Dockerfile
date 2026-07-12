@@ -22,7 +22,7 @@ RUN apt-get update -qq && apt-get upgrade -y -qq && \
 # Install Python dependencies
 # Versions are pinned to match the host environment exactly so that numerical results (FFT, array ops) are bit-identical and the shared reference files in test/ref/ remain valid for both test_server.sh and test_docker.sh.
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir "numpy==2.4.2" "matplotlib==3.10.8" ismrmrd
+    pip install --no-cache-dir "numpy==2.4.2" "matplotlib==3.9.2" ismrmrd
 
 # Add key for CUDA installation
 RUN if [ "$OR_GPU_SUPPORT" = "1" ]; then \
