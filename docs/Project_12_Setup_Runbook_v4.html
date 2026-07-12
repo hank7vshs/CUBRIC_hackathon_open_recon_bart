@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project #12 — Supervisor Setup Runbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f6f4ef; --ink:#1b2129; --ink-soft:#4b5563; --line:#dcd6c8;
+    --teal:#1f6f74; --teal-deep:#154d51; --amber:#c17a3d; --purple:#6a5a8c;
+    --card-bg:#ffffff; --code-bg:#11181f; --code-ink:#dce7e6;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:"IBM Plex Sans", sans-serif; line-height:1.6;}
+  .wrap{max-width:880px; margin:0 auto; padding:0 28px 120px;}
+
+  header.hero{background:linear-gradient(180deg,var(--teal-deep) 0%, #0e3538 100%); color:#eef7f6; padding:60px 28px 52px; position:relative; overflow:hidden;}
+  header.hero::after{content:""; position:absolute; right:-60px; top:-60px; width:280px; height:280px; border:1px solid rgba(255,255,255,.18); border-radius:50%;}
+  .hero-inner{max-width:880px; margin:0 auto; position:relative;}
+  .eyebrow{font-family:"IBM Plex Mono", monospace; font-size:12.5px; letter-spacing:.14em; text-transform:uppercase; color:#bfe4e0; margin:0 0 14px;}
+  h1.title{font-family:"IBM Plex Mono", monospace; font-weight:600; font-size:clamp(24px,4vw,36px); line-height:1.25; margin:0 0 16px; color:#ffffff;}
+  .hero p.lede{font-size:16px; color:#d9efec; max-width:640px; margin:0 0 20px;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; font-family:"IBM Plex Mono", monospace; font-size:12px;}
+  .chip{background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.3); color:#eef7f6; padding:5px 11px; border-radius:20px;}
+
+  nav.toc{background:var(--card-bg); border:1px solid var(--line); border-radius:10px; margin:-28px auto 46px; max-width:824px; padding:18px 22px; box-shadow:0 8px 24px rgba(20,40,40,.08); position:relative; z-index:2;}
+  nav.toc h2{font-family:"IBM Plex Mono", monospace; font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); margin:0 0 10px;}
+  nav.toc ol{margin:0; padding:0 0 0 20px; columns:2; column-gap:28px; font-size:14px;}
+  nav.toc li{margin-bottom:6px;}
+  nav.toc a{color:var(--teal-deep); text-decoration:none; border-bottom:1px dotted #7fb0ac;}
+  nav.toc a:hover{color:var(--amber); border-color:var(--amber);}
+
+  section.block{margin:50px 0;}
+  .sec-head{display:flex; align-items:baseline; gap:14px; margin-bottom:14px; border-bottom:2px solid var(--ink); padding-bottom:10px;}
+  .sec-num{font-family:"IBM Plex Mono", monospace; font-size:13px; color:var(--amber); font-weight:600; white-space:nowrap;}
+  h2.sec-title{font-family:"IBM Plex Mono", monospace; font-size:19px; font-weight:600; margin:0; color:var(--ink);}
+  p{margin:0 0 14px;}
+  p.soft{color:var(--ink-soft);}
+
+  .callout{background:#eef2ee; border-left:4px solid var(--teal); padding:14px 18px; border-radius:0 8px 8px 0; margin:16px 0; font-size:15px;}
+  .callout.warn{border-left-color:var(--amber); background:#f7ece0;}
+  .callout b{color:var(--teal-deep);}
+  .callout.warn b{color:#8a531f;}
+
+  .fixnote{display:flex; gap:12px; align-items:flex-start; background:#fdf2ee; border:1px solid #e8b79a; border-radius:10px; padding:14px 16px; margin:14px 0; font-size:14.5px;}
+  .fixnote .tag{font-family:"IBM Plex Mono", monospace; font-size:11px; font-weight:700; background:#c1502f; color:#fff; padding:3px 8px; border-radius:5px; white-space:nowrap;}
+
+  code, .inline-code{font-family:"IBM Plex Mono", monospace; background:#e9e4d5; padding:1px 6px; border-radius:4px; font-size:.92em; color:#3a3226;}
+  pre{background:var(--code-bg); color:var(--code-ink); padding:14px 18px; border-radius:10px; overflow-x:auto; font-family:"IBM Plex Mono", monospace; font-size:13px; line-height:1.6; margin:10px 0 18px;}
+  pre .cm{color:#7fa79a;}
+
+  .step-list{counter-reset:step; list-style:none; margin:16px 0; padding:0;}
+  .step-list > li{counter-increment:step; position:relative; padding:16px 18px 16px 56px; margin-bottom:14px; background:var(--card-bg); border:1px solid var(--line); border-radius:10px; font-size:15px;}
+  .step-list > li::before{content:counter(step); position:absolute; left:16px; top:18px; width:28px; height:28px; border-radius:50%; background:var(--teal); color:#fff; font-family:"IBM Plex Mono", monospace; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center;}
+  .step-list h4{margin:0 0 8px; font-family:"IBM Plex Mono", monospace; font-size:14.5px; color:var(--teal-deep);}
+  .step-list p{margin:0 0 8px; font-size:14.5px; color:var(--ink-soft);}
+  .step-list pre{margin:8px 0 4px;}
+
+  table.rule{width:100%; border-collapse:collapse; margin:16px 0; font-size:14px;}
+  table.rule th, table.rule td{text-align:left; padding:9px 11px; border-bottom:1px solid var(--line); vertical-align:top;}
+  table.rule th{font-family:"IBM Plex Mono", monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft);}
+
+  .verbadge{display:inline-block; font-family:"IBM Plex Mono", monospace; font-size:11px; font-weight:700; background:var(--purple); color:#fff; padding:3px 10px; border-radius:20px; margin-left:10px; vertical-align:middle;}
+  .newbadge{display:inline-block; font-family:"IBM Plex Mono", monospace; font-size:11px; font-weight:700; background:var(--teal); color:#fff; padding:3px 10px; border-radius:20px; margin-left:10px; vertical-align:middle;}
+
+  footer{max-width:880px; margin:60px auto 0; padding:0 28px; font-family:"IBM Plex Mono", monospace; font-size:12px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:18px;}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <p class="eyebrow">Working log · v4 · to be amended as we go</p>
+    <h1 class="title">Supervisor Setup Runbook<br>CUBRIC Hackathon — Open Recon BART</h1>
+    <p class="lede">A literal, reproducible record of the commands run to take this project from an empty GitHub repo to a working, verified devcontainer — kept as a companion to the Framework Description doc, which explains <i>why</i> each step exists.</p>
+    <div class="meta-row">
+      <span class="chip">repo: hank7vshs/CUBRIC_hackathon_open_recon_bart</span>
+      <span class="chip">host: Ubuntu VM</span>
+      <span class="chip">SSH auth</span>
+      <span class="chip">plain-terminal verification loop</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#s1">Prerequisites</a></li>
+    <li><a href="#s2">Create the GitHub repo</a></li>
+    <li><a href="#s3">Initialize the local project</a></li>
+    <li><a href="#s4">SSH key setup &amp; GitHub connection</a></li>
+    <li><a href="#s5">Switch the remote to SSH &amp; push</a></li>
+    <li><a href="#s6">Open in VS Code + Claude Code</a></li>
+    <li><a href="#s7">Install extensions</a></li>
+    <li><a href="#s8">Verify the devcontainer builds — plain terminal</a></li>
+    <li><a href="#s9">Corrections vs. the original log</a></li>
+    <li><a href="#s10">Devcontainer anatomy — image vs. postCreate vs. postStart</a></li>
+    <li><a href="#s11">Install script &amp; from-scratch replay</a></li>
+    <li><a href="#s12">Bugs found during first test pass</a></li>
+    <li><a href="#s13">Student walkthrough — first test run</a></li>
+  </ol>
+</nav>
+
+<section class="block" id="s1">
+  <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">Prerequisites</h2></div>
+  <p>Assumed already true before this runbook starts, per the host-tier setup covered in the Framework Description doc:</p>
+  <ul>
+    <li>Ubuntu VM up and working</li>
+    <li>Docker Engine installed</li>
+    <li>VS Code + Dev Containers extension installed</li>
+    <li>Claude Code installed and available</li>
+  </ul>
+</section>
+
+<section class="block" id="s2">
+  <div class="sec-head"><span class="sec-num">02</span><h2 class="sec-title">Create the GitHub repo</h2></div>
+  <p>Create an <b>empty</b> repository on GitHub first — no README, no <code>.gitignore</code>, nothing auto-generated — since the local folder already has content to push.</p>
+  <div class="callout"><b>URL:</b> <code>https://github.com/hank7vshs/CUBRIC_hackathon_open_recon_bart</code></div>
+</section>
+
+<section class="block" id="s3">
+  <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">Initialize the local project</h2></div>
+  <ol class="step-list">
+    <li>
+      <h4>Create the project folder</h4>
+      <pre>mkdir -p ~/dev/CUBRIC_hackathon_open_recon_bart
+cd ~/dev/CUBRIC_hackathon_open_recon_bart</pre>
+      <p>(Copy the project's files into this folder before continuing — the original base repo content.)</p>
+    </li>
+    <li>
+      <h4>Initialize git and make the first commit</h4>
+      <pre>git init
+git add .
+git commit -m "Initial commit"
+git branch -M main</pre>
+    </li>
+    <li>
+      <h4>Point it at the GitHub repo (HTTPS for now — swapped to SSH in §5)</h4>
+      <pre>git remote add origin https://github.com/hank7vshs/CUBRIC_hackathon_open_recon_bart.git</pre>
+    </li>
+  </ol>
+</section>
+
+<section class="block" id="s4">
+  <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">SSH key setup &amp; GitHub connection</h2></div>
+  <ol class="step-list">
+    <li>
+      <h4>Check for an existing key first</h4>
+      <pre>ls ~/.ssh</pre>
+      <p>Look for <code>id_ed25519</code> / <code>id_ed25519.pub</code>. If already present, skip straight to step 3 (adding it to the agent).</p>
+    </li>
+    <li>
+      <h4>Generate a new key, if needed</h4>
+      <pre>ssh-keygen -t ed25519 -C "hank7v@gmail.com"</pre>
+      <p>Accept the default location (<code>~/.ssh/id_ed25519</code>) when prompted.</p>
+    </li>
+    <li>
+      <h4>Start the SSH agent and add the key</h4>
+      <pre>eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+ssh-add -l</pre>
+      <p><code>ssh-add -l</code> confirms the key is actually loaded into the agent — an empty result means it didn't take.</p>
+    </li>
+    <li>
+      <h4>Copy the public key</h4>
+      <pre>cat ~/.ssh/id_ed25519.pub</pre>
+      <p>Copy the full output. In GitHub: <b>Settings → SSH and GPG keys → New SSH key</b> → paste it in, give it a recognisable title (e.g. "CUBRIC hackathon VM").</p>
+    </li>
+    <li>
+      <h4>Verify the connection</h4>
+      <pre>ssh -T git@github.com</pre>
+      <p>Expected response: a message confirming successful authentication as your GitHub username — not a shell prompt (GitHub deliberately doesn't grant shell access over this connection).</p>
+    </li>
+  </ol>
+</section>
+
+<section class="block" id="s5">
+  <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">Switch the remote to SSH &amp; push</h2></div>
+  <ol class="step-list">
+    <li>
+      <h4>Confirm the current remote</h4>
+      <pre>git remote -v</pre>
+      <p>Should still show the HTTPS URL from §3.</p>
+    </li>
+    <li>
+      <h4>Swap it to SSH</h4>
+      <pre>git remote set-url origin git@github.com:hank7vshs/CUBRIC_hackathon_open_recon_bart.git</pre>
+    </li>
+    <li>
+      <h4>Push</h4>
+      <pre>git push -u origin main</pre>
+      <p><code>-u</code> sets <code>main</code> to track <code>origin/main</code>, so a plain <code>git push</code> is enough from here on.</p>
+    </li>
+  </ol>
+</section>
+
+<section class="block" id="s6">
+  <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">Open in VS Code + Claude Code</h2></div>
+  <pre>cd ~/dev/CUBRIC_hackathon_open_recon_bart
+code .</pre>
+  <p>Once VS Code opens, launch Claude Code from its integrated terminal. This is the host-VM, native window — the one that stays open for the rest of the session (see the Framework Description doc, §3a).</p>
+</section>
+
+<section class="block" id="s7">
+  <div class="sec-head"><span class="sec-num">07</span><h2 class="sec-title">Install extensions</h2></div>
+  <p>Install the extensions needed for this project, including <b>Dev Containers</b> (required to open the repo in a devcontainer at all). See the Framework Description doc, §6, for the recipe-vs-personal distinction on extensions, and the screenshots showing the inherited-vs-suggested install behaviour.</p>
+  <div class="callout warn"><b>Reminder:</b> installing an extension here, on the host VM's VS Code, does not make it available inside a devcontainer automatically — only extensions declared in <code>.devcontainer/devcontainer.json</code> reach every student's container. This step is about your own native VS Code being usable, not about what students inherit.</div>
+</section>
+
+<section class="block" id="s8">
+  <div class="sec-head"><span class="sec-num">08</span><h2 class="sec-title">Verify the devcontainer builds — plain terminal</h2></div>
+  <p>Per the earlier decision: no second VS Code window. A plain terminal (not VS Code's integrated one) runs the build/test loop, leaving the native VS Code + Claude Code window untouched throughout.</p>
+  <pre>cd ~/dev/CUBRIC_hackathon_open_recon_bart
+docker build -f .devcontainer/Dockerfile -t test-build .
+docker run -it test-build bash</pre>
+  <p>Inside the running container, verify whatever's relevant to the current change, e.g.:</p>
+  <pre>mrtrix3 --version
+exit</pre>
+  <p class="soft">If it works, the same Dockerfile will work identically for every student, regardless of their host OS (Framework Description doc, §3b). If it doesn't, edit the Dockerfile in the native VS Code window and repeat this section.</p>
+</section>
+
+<section class="block" id="s9">
+  <div class="sec-head"><span class="sec-num">09</span><h2 class="sec-title">Corrections vs. the original log<span class="newbadge">v2</span></h2></div>
+  <p>A few adjustments made while cleaning up the raw command sequence into this runbook:</p>
+  <table class="rule">
+    <tr><th>Original</th><th>Corrected to</th><th>Why</th></tr>
+    <tr>
+      <td>No <code>git init</code> before <code>git add .</code></td>
+      <td><code>git init</code> added as the first command in §3</td>
+      <td><code>git add</code>/<code>commit</code> require an initialized repo; this was implicit but missing from the literal log.</td>
+    </tr>
+    <tr>
+      <td><code>Home/hank7v/dev/ UBRIC_hackathon_open_recon_bart</code> (stray space, missing "C")</td>
+      <td><code>~/dev/CUBRIC_hackathon_open_recon_bart</code></td>
+      <td>Typo — matches the actual repo name used later (<code>CUBRIC_hackathon_open_recon_bart</code>) and the tilde shorthand for the home directory.</td>
+    </tr>
+    <tr>
+      <td>SSH key check listed as a bare "verify" step, then a fresh <code>ssh-keygen</code> immediately after</td>
+      <td>Split into "check first" (§4.1) vs. "generate only if needed" (§4.2)</td>
+      <td>Running <code>ssh-keygen</code> unconditionally risks overwriting an existing key if one's already there — worth checking first.</td>
+    </tr>
+    <tr>
+      <td><code>docker build</code> / <code>run</code> commands run together on one line</td>
+      <td>Split into separate, individually-copyable command blocks</td>
+      <td>Easier to copy/paste and to point at when something in the middle fails.</td>
+    </tr>
+  </table>
+</section>
+
+<section class="block" id="s10">
+  <div class="sec-head"><span class="sec-num">10</span><h2 class="sec-title">Devcontainer anatomy — image vs. postCreate vs. postStart<span class="newbadge">v3</span></h2></div>
+  <p>Before adding more tools, a concrete read of what the current <code>Dockerfile</code>, <code>devcontainer.json</code>, and <code>install_extra.sh</code> actually produce — since new tools need to go in the right one of these, not just "somewhere that works today."</p>
+
+  <table class="rule">
+    <tr><th>Layer</th><th>Runs when</th><th>What it currently contains</th></tr>
+    <tr>
+      <td><b>Dockerfile</b><br><span class="soft" style="font-size:12px;">baked into the image</span></td>
+      <td>Once, at <code>docker build</code> — permanent, cached, survives every container rebuild</td>
+      <td>
+        Base: <code>python:3.11-slim-bullseye</code> (Debian 11) <span class="newbadge">v4</span><br>
+        <span class="soft" style="font-size:12px;">Bumped down from 3.12 — <code>Supervised_RNS_dMRI</code>'s <code>dmipy</code> dependency declares <code>requires-python &lt;3.12</code> in its own package metadata; pip hard-refuses to install it on 3.12, full stop. Confirmed via friction-testing every package in the chain (<code>dmipy</code>, <code>DiffSimGen</code>, <code>dipy</code>, <code>snakemake</code>, <code>snakebids</code>) against the pinned <code>numpy==2.4.2</code> on 3.11 — all installed and imported cleanly. <code>server/Dockerfile</code> was bumped to match, so host-mode (<code>run_server.sh</code>) and Docker-mode (<code>server/Dockerfile</code>) stay on the same interpreter.</span><br>
+        <code>DEBIAN_FRONTEND=noninteractive</code> set globally<br>
+        Docker-in-Docker, pinned to <b>24.0.0</b> — deliberately matching the VA60 scanner's MaRS GPU baseline<br>
+        <code>DOCKER_API_VERSION=1.43</code> set, to keep the inner Docker client compatible with that pinned daemon<br>
+        Base Python packages (<code>ismrmrd</code>, <code>h5py</code>, <code>numpy</code>, <code>matplotlib</code>, <code>pydicom</code>, <code>check-jsonschema</code>, <code>pypulseq</code>)<br>
+        <code>COPY --chown=$USERNAME:$USERNAME . /container</code> <span class="newbadge">v4</span> — <code>COPY</code> defaults to root:root ownership regardless of the active <code>USER</code> directive; without <code>--chown</code>, <code>recoon</code> could read but not write test data, client output, etc. (see §12)
+      </td>
+    </tr>
+    <tr>
+      <td><b><code>postCreateCommand</code></b><br><span class="soft" style="font-size:12px;">→ runs <code>install_extra.sh</code></span></td>
+      <td>Once, the <i>first</i> time a container is created from the image — lands in the writable layer, lost on delete/rebuild unless re-declared</td>
+      <td>
+        <code>git config --global core.editor vim</code><br>
+        <code>sudo update-ca-certificates</code> (must run before any network call — see the CA cert gotcha in the Framework Description doc, §3b)<br>
+        apt deps for BART (<code>make</code>, <code>gcc</code>, <code>git</code>, <code>libfftw3-dev</code>, etc.)<br>
+        BART cloned + built from source, pinned to <code>v0.9.00</code>, GPU-conditional build<br>
+        <code>bart-view</code> via apt<br>
+        Environment variables layered four ways: <code>/etc/environment</code>, <code>/etc/profile.d/bart.sh</code>, <code>~/.bashrc</code>, and <code>remoteEnv</code> in <code>devcontainer.json</code>
+      </td>
+    </tr>
+    <tr>
+      <td><b><code>postStartCommand</code></b></td>
+      <td><i>Every</i> container start — re-runs each time, unlike <code>postCreateCommand</code></td>
+      <td>
+        Detects and processes host SSL certs (handles the macOS cert-bundle case specifically) into <code>/usr/local/share/ca-certificates</code><br>
+        Runs <code>sudo update-ca-certificates</code> again<br>
+        Starts the <b>nested</b> Docker daemon inside the container (<code>dockerd</code>, backgrounded via <code>nohup</code>) — this is the inner DinD daemon used for building the final <code>server/Dockerfile</code> image from inside the devcontainer
+      </td>
+    </tr>
+    <tr>
+      <td><b><code>customizations.vscode.extensions</code></b><br><span class="soft" style="font-size:12px;">in <code>devcontainer.json</code></span></td>
+      <td>At container creation, by the Dev Containers extension itself — not by Docker</td>
+      <td>
+        <code>ms-python.python</code>, <code>ms-python.debugpy</code>, <code>ms-python.vscode-pylance</code>, <code>ms-toolsai.jupyter</code>, <code>streetsidesoftware.code-spell-checker</code>, <code>yzhang.markdown-all-in-one</code>, <code>tomoki1207.pdf</code>, <code>ms-azuretools.vscode-containers</code>
+      </td>
+    </tr>
+    <tr>
+      <td><b><code>mounts</code></b> + <code>runArgs</code></td>
+      <td>Live from the host, every start — never touch the image</td>
+      <td>
+        Host SSL cert directories bind-mounted read-only<br>
+        <code>--privileged</code> (required for the nested Docker daemon to run at all)
+      </td>
+    </tr>
+  </table>
+
+  <div class="callout">
+    <b>Where a new tool goes, given this anatomy — revised <span class="newbadge">v4</span>:</b> the original plan below was to fold new tools into <code>install_extra.sh</code>, following the BART pattern. In practice, for GitHub Copilot CLI and MRtrix3 specifically, the decision changed: these stay <b>manual, student-run exercises</b>, not baked into any automated script. The reasoning: BART already demonstrates the "install from source, register env vars, rebuild to verify" pattern once — repeating it for every new tool has diminishing teaching value, whereas doing the MRtrix3 install by hand is itself the lesson (see §13). The exact tested commands are kept as a non-executed reference in <code>.devcontainer/manual_install_reference.sh</code> — copy/pasteable, but nothing sources or runs it automatically. <code>server/Dockerfile</code> is the exception: since it has no <code>postCreateCommand</code> equivalent at all (only <code>docker build</code> ever touches it), anything the deployed module needs at runtime <i>must</i> be baked directly into that Dockerfile — there is no manual/deferred option there.
+  </div>
+
+  <div class="fixnote">
+    <span class="tag">consequence worth remembering</span>
+    <span>Only the <b>Dockerfile</b> row survives an image rebuild untouched. Anything installed manually in a live terminal — exactly what's about to happen in §11 — lives only in that one container's writable layer, same as the <code>postCreateCommand</code> row, and is gone the moment the container is deleted. This is precisely why the plan in §11 (install manually, then script it, then wipe and replay) is the right verification method: deleting the container is the test.</span>
+  </div>
+</section>
+
+<section class="block" id="s11">
+  <div class="sec-head"><span class="sec-num">11</span><h2 class="sec-title">Install script &amp; from-scratch replay — original plan<span class="verbadge">superseded, see §12/§13</span></h2></div>
+  <p>Current state: working inside the student-target devcontainer, missing several tools students will need. Plan, in order:</p>
+  <ol class="step-list">
+    <li>
+      <h4>Install the missing tools manually, live, in the current container</h4>
+      <p>Whatever's needed beyond what's already there — MRtrix3, conda, and anything else identified as required. This is exploratory: the goal right now is confirming <i>what</i> works and <i>which exact commands</i>, not durability. Expected and fine for this to be lost later (see §10's fixnote).</p>
+    </li>
+    <li>
+      <h4>Turn the working commands into a script</h4>
+      <p>Once each tool installs cleanly by hand, fold the exact commands into <code>install_extra.sh</code>, following the same shape already used for BART — non-interactive flags throughout (<code>DEBIAN_FRONTEND=noninteractive</code>, <code>-y</code>, conda's <code>-b</code>/<code>-y</code>, no bare interactive installer scripts). Add matching entries to <code>/etc/environment</code>, <code>/etc/profile.d/</code>, <code>~/.bashrc</code>, and <code>devcontainer.json</code>'s <code>remoteEnv</code> for any new <code>PATH</code> additions, per the existing BART pattern.</p>
+    </li>
+    <li>
+      <h4>Restart the container — deliberately discarding the manual installs</h4>
+      <pre>docker stop &lt;container-id&gt;
+docker rm &lt;container-id&gt;</pre>
+      <p>This is the actual test. Nothing manual survives; the only thing left to reproduce the environment is the script itself.</p>
+    </li>
+    <li>
+      <h4>Reopen in Container — let <code>install_extra.sh</code> run from scratch</h4>
+      <p><code>Ctrl+Shift+P</code> → <b>Dev Containers: Reopen in Container</b>. <code>postCreateCommand</code> re-runs the updated script automatically on this fresh container.</p>
+    </li>
+    <li>
+      <h4>Verify the replay matches the manual result</h4>
+      <p>Re-check every tool added in step 1 — version, basic functionality — inside this freshly-built container. Any mismatch means the script is missing a step that was done by hand and forgotten; fix the script, repeat from step 3.</p>
+    </li>
+    <li>
+      <h4>Once verified: fold into the main documents</h4>
+      <p>With the script confirmed reproducible, this becomes the authoritative record — merge the relevant parts into the Framework Description doc (teaching/logic) and this Setup Runbook (operative steps), rather than leaving them as a separate working log. Candidate for extending into the actual hackathon-day sequence once this environment-setup portion is solid.</p>
+    </li>
+  </ol>
+  <div class="fixnote">
+    <span class="tag">outcome <span class="newbadge">v4</span></span>
+    <span>MRtrix3 was tested exactly per this plan (installed manually, worked cleanly). But the "fold into <code>install_extra.sh</code>" step in item 2 was deliberately <b>not</b> taken for MRtrix3 or Copilot — see the revised callout in §10 for why, and §13 for the actual student-facing flow that replaced it. <code>Supervised_RNS_dMRI</code>'s dependency chain (§12) turned out to force a Python version change (3.12→3.11) in <i>both</i> Dockerfiles before any of this could even install — that came first, not after.</span>
+  </div>
+</section>
+
+<section class="block" id="s12">
+  <div class="sec-head"><span class="sec-num">12</span><h2 class="sec-title">Bugs found during first test pass<span class="newbadge">v4</span></h2></div>
+  <p>Running <code>test_server.sh</code> / <code>test_docker.sh</code> end-to-end for the first time since the Python bump surfaced four distinct issues. None turned out to be Python-3.11-related — worth recording precisely, since three of the four will resurface for anyone testing via plain <code>docker build</code>/<code>docker run</code> instead of VS Code's devcontainer lifecycle.</p>
+
+  <table class="rule">
+    <tr><th>Symptom</th><th>Root cause</th><th>Fix</th></tr>
+    <tr>
+      <td><code>PermissionError</code> opening test data, then again creating <code>out.h5</code> in <code>client/</code></td>
+      <td><code>COPY . /container</code> in <code>.devcontainer/Dockerfile</code> defaulted to <b>root:root</b> ownership — <code>COPY</code> ignores the active <code>USER</code> directive unless <code>--chown</code> is given explicitly. <code>recoon</code> could read (world-readable) but not write.</td>
+      <td>Added <code>--chown=$USERNAME:$USERNAME</code> to the <code>COPY</code> line. Fixed permanently; confirmed via a full rebuild + <code>i2i_invertcontrast</code> pass with zero manual <code>chown</code> needed.</td>
+    </tr>
+    <tr>
+      <td><code>docker_build.sh: line 35: OR_MODULE: unbound variable</code></td>
+      <td><code>OR_MODULE</code> is meant to come from <code>devcontainer.json</code>'s <code>containerEnv</code> — but that's injected by VS Code's Dev Containers extension into terminals <i>it</i> opens, not into a container reached via plain <code>docker exec</code>/manual <code>docker run</code>.</td>
+      <td><code>export OR_MODULE=r2ci_bart</code> manually in any shell not opened through VS Code. Not a bug for students using the normal flow — see §13.</td>
+    </tr>
+    <tr>
+      <td><code>ImportError: The 'bart' Python module could not be found</code></td>
+      <td>BART is deliberately <i>not</i> baked into <code>.devcontainer/Dockerfile</code> — it's built by <code>install_extra.sh</code> via <code>postCreateCommand</code>, which only fires through VS Code's "Reopen in Container" lifecycle. A container started via plain <code>docker build</code>/<code>docker run</code> never triggers it.</td>
+      <td><code>bash /container/.devcontainer/install_extra.sh</code> manually. Again, only relevant to manual-CLI testing — automatic for students via the normal flow.</td>
+    </tr>
+    <tr>
+      <td><code>dockerd</code> fails: <code>failed to mount overlay: operation not permitted</code> / iptables <code>Permission denied</code></td>
+      <td>The nested Docker-in-Docker daemon needs elevated capabilities (<code>CAP_NET_ADMIN</code> for iptables/NAT, overlay filesystem mounts) that an unprivileged container doesn't grant even to its own root user. <code>devcontainer.json</code>'s <code>runArgs: ["--privileged"]</code> supplies this automatically; a plain <code>docker run</code> without that flag does not.</td>
+      <td>Container must be recreated with <code>docker run -it --privileged ...</code> — cannot be added to an already-running container. Confirms this is a manual-CLI-only gap, not a devcontainer bug: nested <code>dockerd</code> always needs privileges, regardless of what's hosting it.</td>
+    </tr>
+  </table>
+
+  <div class="callout warn">
+    <b>Net takeaway:</b> only the first row (file permissions) was an actual repo bug, now fixed at the source. The other three are artifacts of testing outside VS Code's lifecycle for diagnostic speed (§8's "no second VS Code window" approach) — students using the standard "Reopen in Container" flow won't hit rows 2–4 at all.
+  </div>
+</section>
+
+<section class="block" id="s13">
+  <div class="sec-head"><span class="sec-num">13</span><h2 class="sec-title">Student walkthrough — first test run<span class="newbadge">v4</span></h2></div>
+  <p>What a student actually does, once they've opened this repository in VS Code and selected <b>Reopen in Container</b> — the normal, supported flow (unlike §8-§12 above, which deliberately used plain CLI for fast supervisor-side iteration). Because of that, none of §12's rows 2–4 apply here: <code>postCreateCommand</code> runs automatically, so BART is already built and <code>containerEnv</code> is already set by the time the first terminal opens.</p>
+
+  <div class="callout">
+    <b>Use three terminals, not one.</b> <code>run_server.sh</code> blocks in the foreground waiting for a single client connection — backgrounding it with <code>&amp;</code> works, but swallows its live output, which is exactly where the real error shows up when something goes wrong (see §12). Open three terminal panes in VS Code (Terminal → New Terminal, or the split-terminal icon) — one for ad-hoc commands, one dedicated to the server, one dedicated to the client.
+  </div>
+
+  <ol class="step-list">
+    <li>
+      <h4>Terminal 1 — manual installs (once per container lifetime)</h4>
+      <p>GitHub Copilot CLI and MRtrix3 are deliberately <i>not</i> pre-installed (§10) — this is the hands-on exercise. Work through <code>.devcontainer/manual_install_reference.sh</code> command-by-command rather than running it as a script; it's a reference, not something to <code>bash</code> wholesale.</p>
+    </li>
+    <li>
+      <h4>Terminal 2 — server, Terminal 3 — client: start with <code>i2i_invertcontrast</code></h4>
+      <p>No BART dependency at all — the simplest possible sanity check that the devcontainer, the MRD client/server protocol, and the module dispatch all work before touching anything BART-related.</p>
+      <pre><span class="cm"># Terminal 2</span>
+cd /container/server
+./run_server.sh i2i_invertcontrast
+
+<span class="cm"># Terminal 3, once Terminal 2 shows "Serving..."</span>
+cd /container/client
+./run_client.sh i2i_invertcontrast</pre>
+    </li>
+    <li>
+      <h4>Then repeat with <code>r2ci_bart</code></h4>
+      <p>Exercises the full stack, including BART's Python bindings via <code>BART_TOOLBOX_PATH</code> (set automatically by <code>run_server.sh</code> itself — no manual export needed here, unlike the MRtrix3 <code>PATH</code> case in §11).</p>
+      <pre><span class="cm"># Terminal 2</span>
+cd /container/server
+./run_server.sh r2ci_bart
+
+<span class="cm"># Terminal 3</span>
+cd /container/client
+./run_client.sh r2ci_bart</pre>
+    </li>
+    <li>
+      <h4>Once both pass individually: run the full suite</h4>
+      <pre>cd /container/test
+./test_server.sh --speed fast</pre>
+      <p>This is the same check from the main <code>AGENTS.md</code> verification checklist — five fast tests (three <code>r2ci_bart</code>, two <code>i2i_invertcontrast</code>), each printing an NRMSE value under its error margin followed by <code>Test passed successfully!</code>. Confirmed end-to-end on Python 3.11 <span class="newbadge">v4</span>:</p>
+      <pre>Load all tests.
+Filtering tests by speed: fast
+Start testing...
+
+Running Test:
+1e-6 r2ci_bart gre_r2ci.h5 gre_pics_default_reco.h5 fast
+3.033060238522012e-07   1e-6    Test passed successfully!
+
+Running Test:
+1e-6 r2ci_bart tse_r2ci.h5 tse_pics_default_reco.h5 fast
+4.7594548391316494e-07  1e-6    Test passed successfully!
+
+Running Test:
+6e-6 r2ci_bart tse_r2ci_interleaved.h5 tse_interleaved_pics_default_reco.h5 fast
+2.4581977413618006e-06  6e-6    Test passed successfully!
+
+Running Test:
+1e-6 i2i_invertcontrast tse_i2i.h5 tse_i2i_invertcontrast_reco.h5 fast
+0.0     1e-6    Test passed successfully!
+
+Running Test:
+1e-10 i2i_invertcontrast ref/tse_i2i_invertcontrast_reco.h5 ref/tse_i2i_invertcontrast_reco.h5 fast debug_ui_data_passthrough
+0.0     1e-10   Test passed successfully!</pre>
+      <p class="soft">Any <code>FAILED</code> line, or a run that hangs with no output at all, means something's wrong — start with §12's table before assuming it's a new bug.</p>
+    </li>
+  </ol>
+
+  <p class="soft">Not covered here: testing inside <code>server/Dockerfile</code> itself (<code>run_docker.sh</code>/<code>test_docker.sh</code>). That's the Stage 2 check from <code>docs/Dockerfile-Comparison.md</code> — students move to it once the module behaves correctly in host-mode, not before.</p>
+</section>
+
+</div>
+
+<footer>
+  v4 — added Python 3.11 + <code>--chown</code> fix to §10, bugs found during first test pass (§12), and the student first-test-run walkthrough (§13) · companion to Project #12 — Framework Description and <code>docs/Dockerfile-Comparison.md</code> (explain the "why" behind each step here) · amend freely as the actual sequence evolves
+</footer>
+
+</body>
+</html>

@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bullseye
+FROM python:3.11-slim-bullseye
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -148,8 +148,11 @@ RUN usermod -aG docker $USERNAME
 USER $USERNAME
 
 # Copy the rest of the project files
+# --chown is required: COPY defaults to root:root ownership regardless of the
+# active USER, which would otherwise block recoon from reading/writing test
+# data, out.h5, etc. at runtime.
 WORKDIR /container
-COPY . /container
+COPY --chown=$USERNAME:$USERNAME . /container
 
 # In case Git for Windows changed line endings, fix them here
 RUN find /container -type f -name "*.sh" -exec chmod +x {} \;

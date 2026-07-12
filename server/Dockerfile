@@ -1,7 +1,7 @@
 # Copyright Siemens Healthineers AG
 # License-Identifier: see LICENSE
 
-FROM python:3.12-slim-bullseye
+FROM python:3.11-slim-bullseye
 
 ENV DEBIAN_FRONTEND=noninteractive
 
