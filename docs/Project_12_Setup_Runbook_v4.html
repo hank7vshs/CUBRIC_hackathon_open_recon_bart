@@ -457,9 +457,26 @@ Running Test:
 0.0     1e-10   Test passed successfully!</pre>
       <p class="soft">Any <code>FAILED</code> line, or a run that hangs with no output at all, means something's wrong — start with §12's table before assuming it's a new bug.</p>
     </li>
-  </ol>
+    <li>
+      <h4>Simulate what happens on the scanner: Docker-mode test with the standard SHS modules<span class="newbadge">v4</span></h4>
+      <p>Host-mode (above) only proves the module logic works in the devcontainer's own Python environment. Before writing a single line of the new module, it's worth running <code>r2ci_bart</code>/<code>i2i_invertcontrast</code> through the <i>actual deployed image</i> once — this is the closest simulation of what really runs on the scanner, and the Stage 2 check from <code>docs/Dockerfile-Comparison.md</code>. Unlike host-mode, this exercises <code>server/Dockerfile</code> itself: whatever's missing there (a dependency, an env var, a build step) only shows up here, not in host-mode.</p>
+      <pre><span class="cm"># Terminal 2 — build once, then run</span>
+cd /container/server
+./docker_build.sh      <span class="cm"># always rebuilds — use this, not run_docker.sh, after any change</span>
+./run_docker.sh r2ci_bart
 
-  <p class="soft">Not covered here: testing inside <code>server/Dockerfile</code> itself (<code>run_docker.sh</code>/<code>test_docker.sh</code>). That's the Stage 2 check from <code>docs/Dockerfile-Comparison.md</code> — students move to it once the module behaves correctly in host-mode, not before.</p>
+<span class="cm"># Terminal 3, once Terminal 2 shows the container is up</span>
+cd /container/client
+./run_client.sh r2ci_bart</pre>
+      <p><b>Confirm the client actually talked to the container</b>, not something else — the definitive check is the container's own log, not just "the client didn't error":</p>
+      <pre>docker ps -a --filter name=open_recon_server   <span class="cm"># should show Exited (0) once done — server.py exits after one connection</span>
+docker logs open_recon_server                  <span class="cm"># the real proof: shows the MRD message exchange from inside the container</span></pre>
+      <div class="callout">
+        <b>How do the client and server actually find each other?</b> Not through anything Docker-specific — no container names, no DNS, no discovery mechanism at all. It's a single hardcoded number on both sides: <code>server.py:125</code> binds to <code>Server('0.0.0.0', 9002, ...)</code>, and <code>client.py:26</code> defaults to <code>'port': 9002</code> (overridable via <code>-p</code>/<code>--port</code>, but 9002 by default). That's the entire rendezvous mechanism — two independent pieces of code agreeing on the same number by convention.
+        <p style="margin:8px 0 0;">This is exactly why the client can't tell, and doesn't need to, whether it's talking to a host-mode process or a Docker container: in host-mode, <code>server.py</code> binds directly to the host's port 9002. In Docker-mode, it binds to port 9002 <i>inside the container's own isolated network namespace</i>, and <code>run_docker.sh</code>'s <code>-p 9002:9002</code> forwards the host's port 9002 straight through to it — making the containerized server indistinguishable, from the client's point of view, from something listening natively on <code>localhost:9002</code>. If a stale host-mode server from earlier testing is still running when you try this, it'll either collide with the container's port-publish (a clear "port already allocated" error from <code>docker run</code>) or intercept the connection first — worth a quick <code>ss -tlnp | grep 9002</code> beforehand if something seems off.</p>
+      </div>
+    </li>
+  </ol>
 </section>
 
 <section class="block" id="s14">
@@ -539,7 +556,7 @@ pip install --no-cache-dir git+https://github.com/Bradley-Karat/Supervised_RNS_d
 </div>
 
 <footer>
-  v4 — added Python 3.11 + <code>--chown</code> fix to §10, bugs found during first test pass (§12), the student first-test-run walkthrough (§13), the supervisor-only Supervised_RNS_dMRI dependency check (§14), and the module integration roadmap for students (§15) · companion to Project #12 — Framework Description and <code>docs/Dockerfile-Comparison.md</code> (explain the "why" behind each step here) · amend freely as the actual sequence evolves
+  v4 — added Python 3.11 + <code>--chown</code> fix to §10, bugs found during first test pass (§12), the student first-test-run walkthrough (§13, extended with the Docker-mode/Stage-2 scanner simulation and the client/server port-rendezvous note), the supervisor-only Supervised_RNS_dMRI dependency check (§14), and the module integration roadmap for students (§15) · companion to Project #12 — Framework Description and <code>docs/Dockerfile-Comparison.md</code> (explain the "why" behind each step here) · amend freely as the actual sequence evolves
 </footer>
 
 </body>
