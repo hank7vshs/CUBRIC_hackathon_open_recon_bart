@@ -67,6 +67,11 @@
   .verbadge{display:inline-block; font-family:"IBM Plex Mono", monospace; font-size:11px; font-weight:700; background:var(--purple); color:#fff; padding:3px 10px; border-radius:20px; margin-left:10px; vertical-align:middle;}
   .newbadge{display:inline-block; font-family:"IBM Plex Mono", monospace; font-size:11px; font-weight:700; background:var(--teal); color:#fff; padding:3px 10px; border-radius:20px; margin-left:10px; vertical-align:middle;}
 
+
+  .figure{background:var(--card-bg); border:1px solid var(--line); border-radius:12px; padding:18px 16px 12px; margin:22px 0;}
+  .figure svg{width:100%; height:auto; display:block;}
+  .figcap{font-family:"IBM Plex Mono", monospace; font-size:12px; color:var(--ink-soft); text-align:center; margin-top:10px; letter-spacing:.02em;}
+
   footer{max-width:880px; margin:60px auto 0; padding:0 28px; font-family:"IBM Plex Mono", monospace; font-size:12px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:18px;}
 </style>
 </head>
@@ -74,7 +79,7 @@
 
 <header class="hero">
   <div class="hero-inner">
-    <p class="eyebrow">Working log · v4 · to be amended as we go</p>
+    <p class="eyebrow">Working log · v5 · to be amended as we go</p>
     <h1 class="title">Supervisor Setup Runbook<br>CUBRIC Hackathon — Open Recon BART</h1>
     <p class="lede">A literal, reproducible record of the commands run to take this project from an empty GitHub repo to a working, verified devcontainer — kept as a companion to the Framework Description doc, which explains <i>why</i> each step exists.</p>
     <div class="meta-row">
@@ -106,6 +111,8 @@
     <li><a href="#s13">Student walkthrough — first test run</a></li>
     <li><a href="#s14">Supervised_RNS_dMRI dependency check (supervisor-only)</a></li>
     <li><a href="#s15">Module integration roadmap — next steps for students</a></li>
+    <li><a href="#s16">Testing your own module — Docker-mode before packaging</a></li>
+    <li><a href="#s17">Building and packaging the final image to share</a></li>
   </ol>
 </nav>
 
@@ -225,6 +232,39 @@ docker run -it test-build bash</pre>
   <pre>mrtrix3 --version
 exit</pre>
   <p class="soft">If it works, the same Dockerfile will work identically for every student, regardless of their host OS (Framework Description doc, §3b). If it doesn't, edit the Dockerfile in the native VS Code window and repeat this section.</p>
+  <div class="figure">
+    <svg viewBox="0 0 680 500" role="img" aria-label="Nested layers: Ubuntu VM containing the Docker engine, containing the devcontainer, which runs client and server directly and also contains the nested Open Recon container">
+      <rect x="24" y="20" width="628" height="465" rx="20" fill="#eef0eb" stroke="#c7c2b0"/>
+      <text x="42" y="46" font-family="IBM Plex Mono" font-size="13" font-weight="600" fill="#1b2129">Ubuntu 24 VM — your working machine</text>
+
+      <rect x="44" y="64" width="588" height="410" rx="16" fill="#eaf1f6" stroke="#8fb4c9"/>
+      <text x="62" y="90" font-family="IBM Plex Mono" font-size="13" font-weight="600" fill="#1b2129">Docker engine (installed in the VM)</text>
+
+      <rect x="64" y="108" width="544" height="356" rx="14" fill="#eaf3f2" stroke="#1f6f74"/>
+      <text x="82" y="132" font-family="IBM Plex Mono" font-size="13" font-weight="600" fill="#154d51">Devcontainer — your dev environment</text>
+      <text x="82" y="150" font-family="IBM Plex Sans" font-size="11" fill="#4b5563">BART · CUDA 11.6 · Python · VS Code server · git · Claude Code</text>
+
+      <rect x="88" y="174" width="170" height="56" rx="8" fill="#f7ece0" stroke="#d9a373"/>
+      <text x="173" y="198" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#1b2129">client.py</text>
+      <text x="173" y="216" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">test harness · streams .h5</text>
+
+      <rect x="298" y="174" width="200" height="56" rx="8" fill="#f7ece0" stroke="#d9a373"/>
+      <text x="398" y="198" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#1b2129">server.py — option A</text>
+      <text x="398" y="216" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">run directly · fastest</text>
+      <text x="278" y="192" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#4b5563">TCP</text>
+
+      <rect x="88" y="262" width="502" height="180" rx="12" fill="#f0edf6" stroke="#6a5a8c"/>
+      <text x="106" y="286" font-family="IBM Plex Mono" font-size="12.5" font-weight="600" fill="#4b3d6b">Open Recon container — option B</text>
+      <text x="106" y="304" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">Docker-in-Docker · the image you ship to the scanner</text>
+
+      <rect x="112" y="326" width="200" height="56" rx="8" fill="#f7ece0" stroke="#d9a373"/>
+      <text x="212" y="350" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#1b2129">server.py</text>
+      <text x="212" y="368" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">runs in the shipped image</text>
+
+      <text x="112" y="416" font-family="IBM Plex Sans" font-size="11" fill="#4b5563">Built from server/Dockerfile · started via ./run_docker.sh</text>
+    </svg>
+    <p class="figcap">Fig. 2 — VM → Docker engine → devcontainer → nested Open Recon container</p>
+  </div>
 </section>
 
 <section class="block" id="s9">
@@ -258,6 +298,50 @@ exit</pre>
 <section class="block" id="s10">
   <div class="sec-head"><span class="sec-num">10</span><h2 class="sec-title">Devcontainer anatomy — image vs. postCreate vs. postStart<span class="newbadge">v3</span></h2></div>
   <p>Before adding more tools, a concrete read of what the current <code>Dockerfile</code>, <code>devcontainer.json</code>, and <code>install_extra.sh</code> actually produce — since new tools need to go in the right one of these, not just "somewhere that works today."</p>
+  <div class="figure">
+    <svg viewBox="0 0 680 270" role="img" aria-label="Docker Hub and Dockerfile both produce an image made of read-only layers; docker run adds a writable layer to create a container">
+      <defs>
+        <marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#4b5563" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <rect x="36" y="58" width="150" height="52" rx="8" fill="#eaf1f6" stroke="#8fb4c9"/>
+      <text x="111" y="80" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="600" fill="#1b2129">Docker Hub</text>
+      <text x="111" y="98" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#4b5563">public registry</text>
+
+      <rect x="36" y="150" width="150" height="52" rx="8" fill="#f7ece0" stroke="#d9a373"/>
+      <text x="111" y="172" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="600" fill="#1b2129">Dockerfile</text>
+      <text x="111" y="190" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#4b5563">your build recipe</text>
+
+      <text x="225" y="74" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4b5563">docker pull</text>
+      <line x1="186" y1="84" x2="262" y2="92" stroke="#4b5563" stroke-width="1.5" marker-end="url(#a1)"/>
+      <text x="225" y="168" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4b5563">docker build</text>
+      <line x1="186" y1="176" x2="262" y2="176" stroke="#4b5563" stroke-width="1.5" marker-end="url(#a1)"/>
+
+      <rect x="266" y="44" width="180" height="180" rx="12" fill="#eaf3f2" stroke="#1f6f74"/>
+      <text x="356" y="64" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="600" fill="#154d51">Image</text>
+      <text x="356" y="82" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#4b5563">read-only layers</text>
+      <rect x="284" y="98" width="144" height="34" rx="6" fill="#ffffff" stroke="#c7cdd6"/>
+      <text x="356" y="119" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#1b2129">base image (OS)</text>
+      <rect x="284" y="140" width="144" height="34" rx="6" fill="#ffffff" stroke="#c7cdd6"/>
+      <text x="356" y="161" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#1b2129">+ Python · BART</text>
+      <rect x="284" y="182" width="144" height="34" rx="6" fill="#ffffff" stroke="#c7cdd6"/>
+      <text x="356" y="203" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#1b2129">+ server code</text>
+
+      <text x="472" y="126" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4b5563">docker run</text>
+      <line x1="446" y1="134" x2="498" y2="134" stroke="#4b5563" stroke-width="1.5" marker-end="url(#a1)"/>
+
+      <rect x="500" y="44" width="150" height="180" rx="12" fill="#f0edf6" stroke="#6a5a8c"/>
+      <text x="575" y="64" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="600" fill="#4b3d6b">Container</text>
+      <text x="575" y="82" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#4b5563">running instance</text>
+      <rect x="516" y="100" width="118" height="40" rx="6" fill="#f7ece0" stroke="#d9a373"/>
+      <text x="575" y="124" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="600" fill="#1b2129">writable layer</text>
+      <rect x="516" y="150" width="118" height="62" rx="6" fill="#ffffff" stroke="#c7cdd6"/>
+      <text x="575" y="176" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#1b2129">image layers</text>
+      <text x="575" y="194" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#1b2129">(read-only)</text>
+    </svg>
+    <p class="figcap">Fig. 1 — pull or build both yield an image; run adds a writable layer to make a container</p>
+  </div>
 
   <table class="rule">
     <tr><th>Layer</th><th>Runs when</th><th>What it currently contains</th></tr>
@@ -512,6 +596,47 @@ pip install --no-cache-dir git+https://github.com/Bradley-Karat/Supervised_RNS_d
   <div class="sec-head"><span class="sec-num">15</span><h2 class="sec-title">Module integration roadmap — next steps for students<span class="newbadge">v4</span></h2></div>
 
   <p>Once §13's framework checkpoint passes and §14 confirms the dependency chain installs cleanly, this is the actual hackathon exercise: integrating <code>Supervised_RNS_dMRI</code>'s model-fitting logic into a real <code>server/modules/supervised_rns_dmri/</code> module. This is a roadmap of the logical steps, not a tested recipe — unlike earlier sections, none of this has been built yet.</p>
+  <div class="figure">
+    <svg viewBox="0 0 680 380" role="img" aria-label="server.py dispatches over TCP to one selected module: r2ci_bart, i2i_invertcontrast, or a custom module; a shared src library is used by all modules">
+      <rect x="28" y="20" width="624" height="340" rx="18" fill="#eef0eb" stroke="#c7c2b0"/>
+      <text x="44" y="44" font-family="IBM Plex Mono" font-size="13" font-weight="600" fill="#1b2129">Open Recon image — built by server/Dockerfile</text>
+
+      <rect x="190" y="58" width="300" height="56" rx="8" fill="#eaf1f6" stroke="#8fb4c9"/>
+      <text x="340" y="82" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="600" fill="#1b2129">server.py</text>
+      <text x="340" y="100" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">TCP entry point · dispatcher</text>
+
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#4b5563" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <text x="352" y="132" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">dispatch via OR_MODULE</text>
+      <line x1="340" y1="114" x2="340" y2="150" stroke="#4b5563" stroke-width="1.5" marker-end="url(#a2)"/>
+
+      <rect x="40" y="150" width="600" height="98" rx="10" fill="none" stroke="#c7c2b0" stroke-dasharray="5 4"/>
+      <text x="56" y="170" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#1b2129">modules/ — one selected at runtime</text>
+
+      <rect x="52" y="176" width="176" height="56" rx="8" fill="#f0edf6" stroke="#6a5a8c"/>
+      <text x="140" y="198" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#4b3d6b">r2ci_bart</text>
+      <text x="140" y="216" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">raw k-space → image</text>
+
+      <rect x="248" y="176" width="176" height="56" rx="8" fill="#f0edf6" stroke="#6a5a8c"/>
+      <text x="336" y="198" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#4b3d6b">i2i_invertcontrast</text>
+      <text x="336" y="216" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">image → image</text>
+
+      <rect x="444" y="176" width="176" height="56" rx="8" fill="#f7ece0" stroke="#d9a373"/>
+      <text x="532" y="198" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#1b2129">your module</text>
+      <text x="532" y="216" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">images → param maps</text>
+
+      <text x="352" y="266" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">used by every module</text>
+      <line x1="340" y1="282" x2="340" y2="252" stroke="#4b5563" stroke-width="1.5" marker-end="url(#a2)"/>
+
+      <rect x="190" y="282" width="300" height="52" rx="8" fill="#eaf3f2" stroke="#1f6f74"/>
+      <text x="340" y="302" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#154d51">src/ shared library</text>
+      <text x="340" y="320" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">connection · mrdhelper · constants</text>
+    </svg>
+    <p class="figcap">Fig. 3 — plugin dispatch: one interface, interchangeable module implementations</p>
+  </div>
 
   <ol class="step-list">
     <li>
@@ -535,28 +660,115 @@ pip install --no-cache-dir git+https://github.com/Bradley-Karat/Supervised_RNS_d
       <p><code>dwi2mask</code> for the brain mask, <code>dwidenoise</code>'s MP-PCA residual for the noise estimate — both feed directly into what <code>prepare_data_and_noisemaps.py</code> already expects as inputs, per point 3 above.</p>
     </li>
     <li>
-      <h4>5. Call the model-fitting logic — vendored function call, not subprocess</h4>
+      <h4>5. Where does the trained model actually come from, and what ships in the image?<span class="newbadge">v4</span></h4>
+      <p><b>Train offline, once, as prep — never on the live server.</b> <code>server.py</code> accepts one connection, processes it, and exits — it isn't a long-running service that stays warm across patients. Re-training a Random Forest/MLP on every incoming connection would be both wasteful and pointless in a live workflow where someone's waiting for a result, and doesn't fit a serve-and-exit-per-connection architecture anyway. So training happens entirely separately, before deployment, not as part of the module's <code>process()</code> at all:</p>
+      <ul style="margin:0 0 12px 20px; padding:0;">
+        <li>Run <code>setup_and_run_model_training.py</code>'s logic against a training cohort of <b>real</b> scans, purely to characterize realistic noise statistics (<code>sigma_mppca</code>/<code>sigma_SHresiduals</code>) — pooled across however many real datasets contribute, not just one (traced through <code>prepare_data_and_noisemaps.py</code>'s accumulator pattern: each run <i>appends</i> to <code>hold_noisemap_norm_mppca.npy</code> rather than overwriting it, and training later samples randomly from that whole pooled distribution).</li>
+        <li><code>DiffSimGen</code> simulates the clean signal/parameter training pairs, at the <i>target</i> b-values/b-vectors — the model needs to be trained on the same acquisition protocol it'll see at inference time, or there's a domain mismatch.</li>
+        <li>Train the RF/MLP, producing exactly two pickled artifacts: the model itself (<code>trainedML</code>) and a small metadata dict (<code>modelinfo</code>: parameter names, noise distributions, <code>delta</code>/<code>smalldel</code>) — confirmed from <code>run_model_fitting.py</code>'s own <code>pickle.load(...)</code> calls.</li>
+      </ul>
+      <p><b>Only the frozen pickle files get baked into <code>server/Dockerfile</code></b> — not the training cohort's raw data, not <code>DiffSimGen</code>'s simulation code path, not the training scripts. Just the inference-side logic (<code>apply_RF_python</code>/<code>apply_MLP_python</code>) plus whatever real-data preprocessing the incoming single dataset needs before it's fed to that frozen model.</p>
+      <div class="callout warn">
+        <b>Version-matching gotcha, same class as everything else this session:</b> pickle files are sensitive to the exact <code>scikit-learn</code>/<code>numpy</code> versions used to create them — unpickling with a different version elsewhere can fail or misbehave subtly. Train in the same devcontainer environment already validated here (Python 3.11, whatever <code>scikit-learn</code> <code>Supervised_RNS_dMRI</code> pulled in), and make sure <code>server/Dockerfile</code> ends up with matching versions when it loads the same pickle at inference time.
+      </div>
+      <p><b>This is a natural place to split the six students into subgroups.</b> Training is completely decoupled from the OpenRecon framework — the training subgroup never touches MRD, <code>process()</code>, or <code>appl_spec.json</code>, they just need <code>Supervised_RNS_dMRI</code>'s dependency chain (§14) and something to run the training scripts against. That parallelizes well: the integration subgroup(s) can start building/testing the MRD↔NIfTI bridge against a stub/placeholder model immediately, while the training subgroup works independently, converging once a real <code>.pkl</code> exists to drop in. Two things worth confirming before splitting: (1) do the training-focused students actually have access to <b>real</b> diffusion data? The realistic-noise half of the pipeline needs real scans to estimate <code>sigma_mppca</code>/<code>sigma_SHresiduals</code> from — the existing <code>test/data/</code> in this repo is <code>r2ci_bart</code>/<code>i2i_invertcontrast</code> data, not diffusion-weighted, so it won't work for this. (2) train inside the devcontainer rather than a native/personal-laptop install, specifically to avoid re-deriving this session's dependency fixes from scratch and to sidestep the pickle-version mismatch above.</p>
+    </li>
+    <li>
+      <h4>6. Call the model-fitting logic — vendored function call, not subprocess</h4>
       <p>Once the temp BIDS-like folder exists, either call the extracted/adapted Python functions directly (clean, no per-connection subprocess/file-I/O overhead) or shell out to the CLI as a stopgap (<code>subprocess.run([...])</code>) to get something working end-to-end before optimizing.</p>
     </li>
     <li>
-      <h4>6. Convert output parameter maps back to MRD Images</h4>
+      <h4>7. Convert output parameter maps back to MRD Images</h4>
       <p><code>Supervised_RNS_dMRI</code> writes NIfTI parameter maps to disk — read them back with <code>nibabel</code>, convert to <code>ismrmrd.Image.from_array(...)</code> (mirroring exactly what <code>r2ci_bart.py</code>/<code>i2i_invertcontrast.py</code> already do: <code>setHead()</code>, <code>field_of_view</code>, <code>Meta</code> attributes, <code>image_index</code>), and <code>connection.send_image()</code>.</p>
     </li>
     <li>
-      <h4>7. Define scanner UI parameters in <code>doc/appl_spec.json</code></h4>
+      <h4>8. Define scanner UI parameters in <code>doc/appl_spec.json</code></h4>
       <p>Which model to fit, output map selection, etc. — following the existing module pattern.</p>
     </li>
     <li>
-      <h4>8. Test incrementally, cheapest case first</h4>
+      <h4>9. Test incrementally, cheapest case first</h4>
       <p>Get the buffering/format-conversion pipeline working with a pass-through (echo the DWI images back unchanged) <i>before</i> wiring in the actual model-fitting call — isolates "is the MRD↔NIfTI bridge correct" from "does the science work," same philosophy as starting with <code>i2i_invertcontrast</code> before <code>r2ci_bart</code> in §13.</p>
     </li>
   </ol>
 </section>
 
+<section class="block" id="s16">
+  <div class="sec-head"><span class="sec-num">16</span><h2 class="sec-title">Testing your own module — Docker-mode before packaging<span class="newbadge">v4</span></h2></div>
+  <p>Once <code>supervised_rns_dmri</code> passes host-mode testing (§13's pattern, applied to the new module instead of the standard ones) and its own logic works end-to-end, repeat §13's Docker-mode check — but now switching the active module, which is where a couple of things bite harder than they did testing the standard modules.</p>
+  <ol class="step-list">
+    <li>
+      <h4>Switching <code>OR_MODULE</code> — the lightweight way, not the rebuild-everything way</h4>
+      <p>Editing <code>containerEnv</code> in <code>devcontainer.json</code> and rebuilding the devcontainer is the documented way to change the <i>default</i> module — but that's heavyweight for something you'll do repeatedly while iterating. For day-to-day testing, just override it in the current shell before building:</p>
+      <pre>export OR_MODULE=supervised_rns_dmri</pre>
+      <p><code>docker_build.sh</code> only cares what <code>$OR_MODULE</code> resolves to in the shell that calls it — it doesn't matter whether that came from <code>containerEnv</code> or a plain <code>export</code>. Save the <code>devcontainer.json</code> edit + rebuild for when you're ready to set the durable default for packaging (§17).</p>
+    </li>
+    <li>
+      <h4>The stale-image trap — much more likely to bite here than in §13</h4>
+      <p><code>run_docker.sh</code>/<code>test_docker.sh</code> only build <b>if an image with that name doesn't already exist</b> — they have no idea <code>OR_MODULE</code> changed, or that you just added a dependency/the pretrained model to <code>server/Dockerfile</code>. Since you'll be repeatedly editing <code>server/Dockerfile</code> while integrating MRtrix3/the dependency chain/the model file, always force a real rebuild before testing:</p>
+      <pre>./docker_build.sh      <span class="cm"># always rebuilds unconditionally — use this after any change</span>
+./run_docker.sh         <span class="cm"># reuses whatever image now exists</span></pre>
+      <p class="soft">Or <code>docker rmi open_recon_server:latest</code> first if you'd rather be certain nothing stale survives.</p>
+    </li>
+    <li>
+      <h4>Verify the same way as §13</h4>
+      <pre>docker ps -a --filter name=open_recon_server
+docker logs open_recon_server</pre>
+      <p>Confirms the container itself served the connection and exited cleanly — the definitive check, not just "the client didn't error."</p>
+    </li>
+  </ol>
+</section>
+
+<section class="block" id="s17">
+  <div class="sec-head"><span class="sec-num">17</span><h2 class="sec-title">Building and packaging the final image to share<span class="newbadge">v4</span></h2></div>
+
+  <p><b>First, what actually ends up in the image — three things worth keeping distinct:</b> the <b>Dockerfile</b> is just a text recipe, never shipped anywhere. The <b>image</b> is the self-contained filesystem snapshot (plus metadata — env vars, labels, the default command) produced once by <code>docker build</code>. A <b>container</b> is a live running instance of that image. What you package and hand to someone is the image.</p>
+
+  <p>Concretely, <code>server/Dockerfile</code>'s image contains: the base OS + Python 3.11, system packages, BART (and eventually MRtrix3) built from source, and — via <code>COPY . /opt/code/python-ismrmrd-server</code> — the <i>entire</i> <code>server/</code> folder copied in wholesale: <code>src/</code>, every module under <code>modules/</code>, each module's own <code>doc/</code>, and <b>any other files placed there</b>, including the pretrained model. That last part matters directly: the model's <code>.pkl</code> files don't need a separate <code>COPY</code> line in the Dockerfile at all — just place them inside the module's own folder before running <code>docker build</code>, e.g.:</p>
+  <pre>server/modules/supervised_rns_dmri/model/trained_rf.pkl
+server/modules/supervised_rns_dmri/model/modelinfo.pkl</pre>
+  <p>and the existing <code>COPY</code> line sweeps them up automatically — same as how <code>doc/appl_spec.json</code> already gets included for the existing modules, no Dockerfile edit needed for this specific step.</p>
+
+  <p><b>The packaging pipeline itself</b> (from the root <code>Readme.md</code>) — worth distinguishing "package it properly for a real scanner" from "just prove it works," since most hackathon teams likely won't have a physical VA60 to install onto:</p>
+  <ol class="step-list">
+    <li>
+      <h4>1. Point the packaging tooling at the new module<span class="newbadge">v4</span></h4>
+      <pre>export OR_MODULE=supervised_rns_dmri</pre>
+      <p>Same lightweight approach as §16, and for the same reason: <b>do not</b> edit <code>containerEnv</code> in <code>devcontainer.json</code> and rebuild the devcontainer just for this. <code>create_archive.sh</code> reads <code>$OR_MODULE</code> from the calling shell exactly like <code>docker_build.sh</code> does (a plain <code>if [ -z "${OR_MODULE}" ]</code> check, nothing <code>containerEnv</code>-specific) — a rebuild here would tear down the current container and wipe every manually-installed tool (MRtrix3, the <code>Supervised_RNS_dMRI</code> chain, anything else done by hand in §11/§14), an absurdly disproportionate cost just to set one variable for a one-off packaging run.</p>
+    </li>
+    <li>
+      <h4>2. Make sure the module's <code>doc/</code> folder is actually complete</h4>
+      <p><code>server/modules/supervised_rns_dmri/doc/appl_spec.json</code> (validated against its schema) and <code>application_guide.md</code> (auto-converted to a PDF) both need to exist — same pattern as the existing modules' own <code>doc/</code> folders.</p>
+    </li>
+    <li>
+      <h4>3. Run the verification checklist before packaging, not after</h4>
+      <p><code>test_server.sh --speed fast</code> (host-mode) and ideally <code>test_docker.sh --speed fast</code> (§16, inside <code>server/Dockerfile</code>) both passing — catching a broken module at packaging time is much more annoying than catching it now.</p>
+    </li>
+    <li>
+      <h4>4. Package it — pick the format for the target scanner software</h4>
+      <pre>./create_archive.sh              <span class="cm"># VA60 (baseline) — embeds appl_spec.json as a Docker image label</span>
+./create_archive.sh --va70       <span class="cm"># VA70+ — Alpaca package format (separate ApplSpec.json/Properties.json)</span>
+./create_archive.sh --va70 --oci <span class="cm"># VA70+ with OCI-layout export</span></pre>
+      <p>Automatically validates <code>appl_spec.json</code>, generates the PDF, builds the image (forwarding the right <code>OR_MODULE</code> build-arg), and zips everything up — output name derived from <code>appl_spec.json</code>'s vendor/id/version fields.</p>
+    </li>
+    <li>
+      <h4>5. Verify the resulting zip's contents</h4>
+      <p>VA60: exactly 2 files (<code>.tar</code> + <code>.pdf</code>); VA70+: exactly 4 (<code>ApplSpec.json</code>, <code>Container.tar</code>, <code>Manual.pdf</code>, <code>Properties.json</code>) — per <code>AGENTS.md</code>'s own verification checklist.</p>
+    </li>
+    <li>
+      <h4>6. If actually deploying to a physical VA60 scanner</h4>
+      <p>Exit kiosk mode, copy the zip to <code>C:\Program Files\Siemens\Numaris\OperationalManagement\FileTransfer\incoming</code>, the installer picks it up silently — verify via <b>MyExam Cockpit → Inline tab → OpenRecon</b> dropdown (or the install logs if it doesn't show up).</p>
+    </li>
+  </ol>
+
+  <div class="callout">
+    <b>The realistic path for most teams:</b> without physical scanner hardware, step 6 isn't reachable — the practical "share with users" deliverable is simply <code>./run_docker.sh supervised_rns_dmri</code> plus a client run against it, handing over either the running demo or the built image/zip itself as the result.
+  </div>
+</section>
+
 </div>
 
 <footer>
-  v4 — added Python 3.11 + <code>--chown</code> fix to §10, bugs found during first test pass (§12), the student first-test-run walkthrough (§13, extended with the Docker-mode/Stage-2 scanner simulation and the client/server port-rendezvous note), the supervisor-only Supervised_RNS_dMRI dependency check (§14), and the module integration roadmap for students (§15) · companion to Project #12 — Framework Description and <code>docs/Dockerfile-Comparison.md</code> (explain the "why" behind each step here) · amend freely as the actual sequence evolves
+  v5 — content unchanged from v4; added schematic diagrams (image→container lifecycle, nested Docker stack, plugin dispatch) reused from the companion docs. v4 — added Python 3.11 + <code>--chown</code> fix to §10, bugs found during first test pass (§12), the student first-test-run walkthrough (§13, extended with the Docker-mode/Stage-2 scanner simulation and the client/server port-rendezvous note), the supervisor-only Supervised_RNS_dMRI dependency check (§14), the module integration roadmap for students (§15, extended with the offline-training/pretrained-model architecture and team-split guidance), testing your own module in Docker-mode before packaging (§16), and building/packaging the final image to share (§17) · companion to Project #12 — Framework Description and <code>docs/Dockerfile-Comparison.md</code> (explain the "why" behind each step here) · amend freely as the actual sequence evolves
 </footer>
 
 </body>
