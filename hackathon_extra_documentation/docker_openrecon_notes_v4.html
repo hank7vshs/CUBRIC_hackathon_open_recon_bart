@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VM → Docker → Open Recon — Working Notes v1</title>
+<title>VM → Docker → Open Recon — Working Notes v4</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans:ital@1&display=swap" rel="stylesheet">
@@ -158,6 +158,10 @@
     margin:18px 0;
   }
   @media(max-width:640px){.pair{grid-template-columns:1fr;}}
+  .newbadge{
+    display:inline-block; font-family:"IBM Plex Mono", monospace; font-size:11px; font-weight:700;
+    background:var(--teal); color:#fff; padding:3px 10px; border-radius:20px; margin-left:10px; vertical-align:middle;
+  }
   .pcard{
     background:var(--card-bg);
     border:1px solid var(--line);
@@ -261,13 +265,14 @@
 
 <header class="hero">
   <div class="hero-inner">
-    <p class="eyebrow">Working notes · v2 · to be amended</p>
+    <p class="eyebrow">Working notes · v4 · to be amended</p>
     <h1 class="title">From a bare VM<br>to an Open Recon module</h1>
     <p class="lede">A conceptual trail from virtual machines and Docker fundamentals through to the Open Recon plugin architecture, packaging, and running Claude Code inside the devcontainer — captured for the diffusion-microstructure hackathon build.</p>
     <div class="meta-row">
       <span class="chip">VM vs container</span>
       <span class="chip">image vs container</span>
       <span class="chip">Dockerfile best practice</span>
+      <span class="chip">devcontainer logic</span>
       <span class="chip">Open Recon plugin model</span>
       <span class="chip">sharing: repo vs artifact</span>
       <span class="chip">devcontainer + Claude Code</span>
@@ -283,11 +288,12 @@
     <li><a href="#s1">VM vs. container</a></li>
     <li><a href="#s2">Image → container lifecycle</a></li>
     <li><a href="#s3">Dockerfile as source of truth</a></li>
-    <li><a href="#s4">The nested stack in this repo</a></li>
-    <li><a href="#s5">Open Recon's plugin architecture</a></li>
-    <li><a href="#s6">Two sharing modes</a></li>
-    <li><a href="#s7">Two Dockerfiles, two audiences</a></li>
-    <li><a href="#s8">VS Code + Claude Code in the devcontainer</a></li>
+    <li><a href="#s4">The devcontainer layer: logic and integration with Docker</a></li>
+    <li><a href="#s5">The nested stack in this repo</a></li>
+    <li><a href="#s6">Open Recon's plugin architecture</a></li>
+    <li><a href="#s7">Two sharing modes</a></li>
+    <li><a href="#s8">Two Dockerfiles, two audiences</a></li>
+    <li><a href="#s9">VS Code + Claude Code in the devcontainer</a></li>
   </ol>
 </nav>
 
@@ -372,7 +378,116 @@ CMD ["python3", "server.py"]     <span class="cm"># what runs on container start
 </section>
 
 <section class="block" id="s4">
-  <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">The nested stack in this repo</h2></div>
+  <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">The devcontainer layer: logic and integration with Docker<span class="newbadge">re-added in v3</span></h2></div>
+  <p>"Devcontainer" is not a separate technology from Docker — it is a <b>layer built on top of it</b>. Docker alone only knows about images, containers, and layers; it has no concept of "editor," "extension," or "developer workflow." The devcontainer spec exists specifically to fill that gap.</p>
+  <div class="pair">
+    <div class="pcard">
+      <h4>Docker, on its own</h4>
+      <p><code>docker build</code>, <code>docker run</code>, images, containers, mounts — but only if the flags are typed by hand every time. General-purpose, no notion of a developer sitting inside the container.</p>
+    </div>
+    <div class="pcard">
+      <h4>Devcontainer, on top</h4>
+      <p>A declarative file, <code>devcontainer.json</code>, read by a client tool that translates it into ordinary Docker commands: which Dockerfile to build, which folders to mount, which extensions to install, which ports to forward, and lifecycle commands to run.</p>
+    </div>
+  </div>
+  <div class="figure">
+    <svg viewBox="0 0 680 380" role="img" aria-label="devcontainer.json is read by a client tool such as VS Code's Dev Containers extension or the devcontainer CLI, which translates it into ordinary Docker build and run commands, producing a container enriched with editor integration that Docker itself has no concept of">
+      <defs><marker id="a4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#4b5563" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+      <rect x="40" y="20" width="600" height="90" rx="12" fill="#f0edf6" stroke="#6a5a8c"/>
+      <text x="340" y="46" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" font-weight="600" fill="#4b3d6b">devcontainer.json — declarative spec</text>
+      <text x="340" y="68" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#4b5563">build: Dockerfile · mounts · features · forwardPorts</text>
+      <text x="340" y="86" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#4b5563">postCreateCommand · postStartCommand · extensions</text>
+
+      <text x="340" y="132" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4b5563">read + interpreted by</text>
+      <line x1="340" y1="110" x2="340" y2="148" stroke="#4b5563" stroke-width="1.5" marker-end="url(#a4)"/>
+
+      <rect x="120" y="148" width="440" height="60" rx="10" fill="#eaf1f6" stroke="#8fb4c9"/>
+      <text x="340" y="174" text-anchor="middle" font-family="IBM Plex Mono" font-size="12.5" font-weight="600" fill="#1b2129">VS Code Dev Containers ext. / devcontainer CLI</text>
+      <text x="340" y="194" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">also: GitHub Codespaces, JetBrains Gateway</text>
+
+      <text x="340" y="234" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4b5563">issues plain</text>
+      <line x1="340" y1="208" x2="340" y2="248" stroke="#4b5563" stroke-width="1.5" marker-end="url(#a4)"/>
+
+      <rect x="160" y="248" width="360" height="56" rx="10" fill="#eaf3f2" stroke="#1f6f74"/>
+      <text x="340" y="272" text-anchor="middle" font-family="IBM Plex Mono" font-size="12.5" font-weight="600" fill="#154d51">docker build / docker run — same primitives</text>
+      <text x="340" y="292" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">Docker has no concept of "editor" or "extension"</text>
+
+      <text x="340" y="332" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#4b5563">produces</text>
+      <line x1="340" y1="304" x2="340" y2="344" stroke="#4b5563" stroke-width="1.5" marker-end="url(#a4)"/>
+
+      <rect x="200" y="344" width="280" height="30" rx="8" fill="#f7ece0" stroke="#d9a373"/>
+      <text x="340" y="364" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#1b2129">enriched, dev-ready container</text>
+    </svg>
+    <p class="figcap">Fig. 2 — devcontainer.json as an orchestration layer that drives the Docker engine</p>
+  </div>
+  <ul class="tick">
+    <li><b>Open specification, not a VS Code trick.</b> The devcontainer format lives at <code>containers.dev</code> and is implemented by several tools — VS Code's Dev Containers extension, GitHub Codespaces, JetBrains Gateway, and a standalone <code>devcontainer</code> CLI usable without any editor.</li>
+    <li><b>At the bottom, it is still just Docker.</b> Everything <code>devcontainer.json</code> declares eventually becomes an ordinary <code>docker build</code> plus an ordinary <code>docker run</code> with flags (<code>-v</code> for mounts, <code>-p</code> for ports) that could be typed by hand — the spec exists so that configuration is written once, checked into git, and reproduced identically by anyone who opens the folder.</li>
+    <li><b>Builder / facade relationship.</b> Docker is the low-level API — flexible but verbose. <code>devcontainer.json</code> is a declarative recipe that a facade (the extension or CLI) reads and translates into the correct sequence of low-level Docker calls, so nobody has to assemble those calls by hand.</li>
+  </ul>
+  <div class="callout">
+    <b>In this repo, concretely:</b> <code>.devcontainer/Dockerfile</code> is pure Docker — same recipe concept as everywhere else in this document. <code>.devcontainer/devcontainer.json</code> is the extra layer that tells VS Code <i>how</i> to use that Dockerfile: build it this way, mount the repo here, forward this port, install these extensions, run this command after creation. Delete <code>devcontainer.json</code> entirely and the Dockerfile still builds and runs fine with plain <code>docker build</code>/<code>docker run</code> — only the automatic editor wiring that makes "Reopen in Container" a one-click action would be lost.
+  </div>
+
+  <h3 style="font-family:'IBM Plex Mono',monospace; font-size:15.5px; margin:28px 0 12px; color:var(--ink);">From ephemeral trial to permanent recipe<span class="newbadge">v4</span></h3>
+  <p>The devcontainer's whole purpose is to be an <b>ephemeral testbed</b>: install something by hand, see if it works, keep going. Nothing about that testing step is automatically remembered by any image. Getting a validated install to <i>stick</i> — so every student's build has it too — requires one explicit, manual action: copy the command into the Dockerfile and rebuild.</p>
+  <div class="figure">
+    <svg viewBox="0 0 700 260" role="img" aria-label="Installing a tool by hand in a running container lands only in its writable layer. That does not automatically appear in any image. Getting it into a new image requires manually writing the same install command into the Dockerfile, then running docker build to produce a new image that anyone can reproduce.">
+      <defs><marker id="a4b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#4b5563" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+      <rect x="20" y="30" width="190" height="90" rx="10" fill="#f7ece0" stroke="#d9a373"/>
+      <text x="115" y="58" text-anchor="middle" font-family="IBM Plex Mono" font-size="12.5" font-weight="600" fill="#1b2129">apt/pip install</text>
+      <text x="115" y="76" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">typed live in the</text>
+      <text x="115" y="92" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">running devcontainer</text>
+
+      <text x="255" y="66" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#4b5563">writable</text>
+      <text x="255" y="80" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#4b5563">layer only</text>
+      <line x1="210" y1="75" x2="300" y2="75" stroke="#4b5563" stroke-width="1.5" marker-end="url(#a4b)"/>
+
+      <rect x="300" y="30" width="190" height="90" rx="10" fill="#eef0eb" stroke="#c7c2b0"/>
+      <text x="395" y="58" text-anchor="middle" font-family="IBM Plex Mono" font-size="12.5" font-weight="600" fill="#1b2129">Ephemeral state</text>
+      <text x="395" y="76" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">lost on rebuild</text>
+      <text x="395" y="92" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#8a531f" font-weight="600">not in any image</text>
+
+      <line x1="115" y1="120" x2="115" y2="160" stroke="#4b5563" stroke-width="1.5" marker-end="url(#a4b)"/>
+      <text x="150" y="145" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#4b5563">manual step — you copy the command</text>
+
+      <rect x="20" y="160" width="270" height="80" rx="10" fill="#eaf3f2" stroke="#1f6f74"/>
+      <text x="155" y="188" text-anchor="middle" font-family="IBM Plex Mono" font-size="12.5" font-weight="600" fill="#154d51">write it into the Dockerfile</text>
+      <text x="155" y="206" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">RUN apt-get install ... / pip install ...</text>
+      <text x="155" y="222" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">committed to git — the recipe</text>
+
+      <text x="335" y="195" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#4b5563">docker build</text>
+      <line x1="290" y1="200" x2="380" y2="200" stroke="#4b5563" stroke-width="1.5" marker-end="url(#a4b)"/>
+
+      <rect x="380" y="160" width="300" height="80" rx="10" fill="#f0edf6" stroke="#6a5a8c"/>
+      <text x="530" y="188" text-anchor="middle" font-family="IBM Plex Mono" font-size="12.5" font-weight="600" fill="#4b3d6b">new image, reproducibly</text>
+      <text x="530" y="206" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">anyone building the repo gets it too</text>
+      <text x="530" y="222" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">no ad hoc step required downstream</text>
+    </svg>
+    <p class="figcap">Fig. 3 — an ephemeral install only becomes reproducible once it's transcribed into the Dockerfile and rebuilt</p>
+  </div>
+  <p class="soft"><code>docker diff &lt;container&gt;</code> lists everything added, changed, or deleted in the writable layer versus the image it started from — useful for double-checking nothing was forgotten before transcribing, though it won't write the Dockerfile lines for you. Reverse-engineering tools that attempt this from a committed image exist but are heuristic and lossy (see §3's note on <code>docker commit</code>) — not something to build a reproducible pipeline on.</p>
+
+  <div class="pair">
+    <div class="pcard">
+      <h4>Rebuild ≠ patch</h4>
+      <p>A rebuild does not take the old image and bolt new layers onto it. Docker builds fresh from the top of the <i>current, full text</i> of the Dockerfile every time. What actually changes between builds is the recipe, not the previous image.</p>
+    </div>
+    <div class="pcard">
+      <h4>Where new lines go</h4>
+      <p>New <code>RUN</code>/<code>COPY</code> lines are usually added lower in the file — not because correctness requires it, but because of the build cache: everything after a changed line gets rebuilt, so rarely-changing steps (base image, OS packages) belong near the top, frequently-edited ones (your code) near the bottom. <code>CMD</code>/<code>ENTRYPOINT</code> stay last regardless, since that's what actually runs on container start.</p>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <b>Two different things get added to the recipe, and only one goes through the "trial → transcribe" cycle:</b> dependencies (MRtrix, PyTorch, a pip package) are <i>installed</i>, so they need to be validated live first, then written as a <code>RUN</code> line. Your own module code, trained weights, and auxiliary data are not installed at all — they're <i>copied</i>. The Dockerfile's own <code>COPY</code> instruction is what pulls in that file tree directly from the repo; there's no live-testing phase for that step, since it's not a package install, just your own files being placed into the image at build time. <code>COPY server/ /app/</code> already covers any new file added under that folder, with no Dockerfile edit needed for the file itself.
+  </div>
+</section>
+
+<section class="block" id="s5">
+  <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">The nested stack in this repo</h2></div>
   <p>Applied to the actual environment: an Ubuntu VM running a Docker engine, inside which VS Code's devcontainer runs, inside which the Open Recon container can itself be built and run (Docker‑in‑Docker).</p>
   <div class="figure">
     <svg viewBox="0 0 680 500" role="img" aria-label="Nested layers: Ubuntu VM containing the Docker engine, containing the devcontainer, which runs client and server directly and also contains the nested Open Recon container">
@@ -405,13 +520,13 @@ CMD ["python3", "server.py"]     <span class="cm"># what runs on container start
 
       <text x="112" y="416" font-family="IBM Plex Sans" font-size="11" fill="#4b5563">Built from server/Dockerfile · started via ./run_docker.sh</text>
     </svg>
-    <p class="figcap">Fig. 2 — VM → Docker engine → devcontainer → nested Open Recon container</p>
+    <p class="figcap">Fig. 4 — VM → Docker engine → devcontainer → nested Open Recon container</p>
   </div>
   <p class="soft">VS Code itself splits at this boundary: the window renders on the host, but the terminal, extensions, and debugger run inside the devcontainer. That is why installing a tool like Claude Code on the host does not make it visible inside the container.</p>
 </section>
 
-<section class="block" id="s5">
-  <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">Open Recon's plugin architecture</h2></div>
+<section class="block" id="s6">
+  <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">Open Recon's plugin architecture</h2></div>
   <p>The image <b>packages</b> functionality; it does not itself implement it. <code>server.py</code> is a dispatcher; each module is an interchangeable strategy implementing one interface — <code>process(connection, ui_data, mrd_header)</code>.</p>
   <div class="figure">
     <svg viewBox="0 0 680 380" role="img" aria-label="server.py dispatches over TCP to one selected module: r2ci_bart, i2i_invertcontrast, or a custom module; a shared src library is used by all modules">
@@ -452,19 +567,19 @@ CMD ["python3", "server.py"]     <span class="cm"># what runs on container start
       <text x="340" y="302" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" font-weight="600" fill="#154d51">src/ shared library</text>
       <text x="340" y="320" text-anchor="middle" font-family="IBM Plex Sans" font-size="10.5" fill="#4b5563">connection · mrdhelper · constants</text>
     </svg>
-    <p class="figcap">Fig. 3 — plugin dispatch: one interface, interchangeable module implementations</p>
+    <p class="figcap">Fig. 5 — plugin dispatch: one interface, interchangeable module implementations</p>
   </div>
   <p><b>For the hackathon target:</b> the diffusion-microstructure tool is image-to-image (scanner has already reconstructed; the tool infers parameter maps from those images) — so <code>i2i_invertcontrast</code> is the right scaffolding, not <code>r2ci_bart</code>.</p>
   <ul class="tick">
     <li>Copy <code>i2i_invertcontrast</code> as a starting module; replace its trivial contrast-inversion line with the RNS-trained inference call.</li>
     <li>Register the new module name in <code>server.py</code>'s <code>choices=</code> list.</li>
     <li>A new module's <code>.py</code> file is picked up automatically on the next image build — <code>COPY server/ /app/</code> copies the whole directory, so no Dockerfile edit is needed to "add" the file itself.</li>
-    <li>A Dockerfile edit <i>is</i> needed only when a new library is required (e.g. PyTorch for the inference model) — add it to both Dockerfiles (see §7).</li>
+    <li>A Dockerfile edit <i>is</i> needed only when a new library is required (e.g. PyTorch for the inference model) — add it to both Dockerfiles (see §8).</li>
   </ul>
 </section>
 
-<section class="block" id="s6">
-  <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">Two sharing modes</h2></div>
+<section class="block" id="s7">
+  <div class="sec-head"><span class="sec-num">07</span><h2 class="sec-title">Two sharing modes</h2></div>
   <p class="thesis">The confusion dissolves once you separate: share to rebuild vs. share to run. Different goal, different artifact.</p>
   <table class="rule">
     <tr><th>Goal</th><th>What you share</th><th>Who uses it, how</th></tr>
@@ -474,8 +589,8 @@ CMD ["python3", "server.py"]     <span class="cm"># what runs on container start
   <p class="soft">A Dockerfile alone, without the files it <code>COPY</code>s, fails to build for anyone else — the shareable unit is the whole build context, not the single file. For the hackathon specifically: the <b>repo</b> is what goes to the tool developers and Open Recon tutors; the <b>packaged image</b> (via <code>create_archive.sh</code>) is what goes to the Free.Max scanner.</p>
 </section>
 
-<section class="block" id="s7">
-  <div class="sec-head"><span class="sec-num">07</span><h2 class="sec-title">Two Dockerfiles, two audiences</h2></div>
+<section class="block" id="s8">
+  <div class="sec-head"><span class="sec-num">08</span><h2 class="sec-title">Two Dockerfiles, two audiences</h2></div>
   <div class="pair">
     <div class="pcard">
       <h4>.devcontainer/Dockerfile</h4>
@@ -491,8 +606,8 @@ CMD ["python3", "server.py"]     <span class="cm"># what runs on container start
   </div>
 </section>
 
-<section class="block" id="s8">
-  <div class="sec-head"><span class="sec-num">08</span><h2 class="sec-title">VS Code + Claude Code in the devcontainer</h2></div>
+<section class="block" id="s9">
+  <div class="sec-head"><span class="sec-num">09</span><h2 class="sec-title">VS Code + Claude Code in the devcontainer</h2></div>
   <p>Opening "Reopen in Container" splits VS Code: the UI stays on the host, the backend (terminal, extensions, debugger) relocates inside the container. Anything typed in that terminal runs with the container's tools — which is why a host-installed CLI is invisible there.</p>
   <p>To have Claude Code available inside the devcontainer, reproducibly:</p>
   <pre>// .devcontainer/devcontainer.json
@@ -506,7 +621,7 @@ CMD ["python3", "server.py"]     <span class="cm"># what runs on container start
 </div>
 
 <footer>
-  v2 — light revision of v1: corrected the devcontainer base image to Debian 11 (python:3.12-slim-bullseye) and noted the pinned DinD 24.0.0 that matches the VA60 scanner baseline; otherwise the conceptual trail is unchanged. v1 — generated from working-session notes · diagrams are schematic, not to scale · amend freely in later versions
+  v4 — extended §4 with "From ephemeral trial to permanent recipe": why a validated install doesn't automatically carry into any image (writable layer vs. Dockerfile), the rebuild-is-fresh-not-patched clarification, why new lines are conventionally added lower (build cache, not correctness), and the distinction between installed dependencies (trial → transcribe as RUN) versus your own code/data (pulled in directly by COPY, no trial phase). v3 — re-added §4, "The devcontainer layer: logic and integration with Docker" (dropped without intention between drafts): devcontainer.json as a declarative orchestration layer over plain Docker, the open containers.dev spec, and the builder/facade relationship between the two. Sections 4–8 renumbered to 5–9 accordingly. v2 — corrected the devcontainer base image to Debian 11 (python:3.12-slim-bullseye) and noted the pinned DinD 24.0.0 that matches the VA60 scanner baseline. v1 — generated from working-session notes · diagrams are schematic, not to scale · amend freely in later versions
 </footer>
 
 </body>
