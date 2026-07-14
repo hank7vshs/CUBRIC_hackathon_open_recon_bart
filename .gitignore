@@ -6,4 +6,4 @@
 *.pem
 *.DS_Store
 further_materials/04_raw_data_conversion/*.h5
-hackathon_extra_documentation/
+hackathon_claude_documentations/
