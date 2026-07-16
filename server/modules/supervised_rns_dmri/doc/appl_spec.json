@@ -1,0 +1,83 @@
+{
+  "general": {
+    "name": { "en": "Open Recon RNS dMRI App" },
+    "version": "1.0.0",
+    "vendor": "SHSTeam",
+    "information": { "en": "Diffusion MRI model fitting using supervised machine learning trained with Realistic Noise Synthesis (Supervised_RNS_dMRI)." },
+    "id": "OpenReconRNSdMRI",
+	"regulatory_information":{
+		"device_trade_name":"OpenReconRNSdMRI",
+        "production_identifier":"1.0.0",
+        "manufacturer_address":"Erlangen",
+        "made_in":"Germany",
+        "manufacture_date":"2026/07/16",
+        "material_number":"1337",
+        "gtin":"1337",
+        "udi":"000000000000000000000000000",
+        "safety_advices":"",
+        "special_operating_instructions":"",
+        "additional_relevant_information":""
+	}
+  },
+  "reconstruction": {
+    "transfer_protocol": {
+      "protocol": "ISMRMRD",
+      "version": "1.4.1"
+    },
+    "port": 9002,
+    "emitter": "image",
+    "injector": "image",
+    "can_process_adjustment_data": false,
+    "can_use_gpu": true,
+    "min_count_required_gpus": 0,
+    "min_required_gpu_memory": 0,
+    "min_required_memory": 4096,
+    "min_count_required_cpu_cores": 1,
+    "content_qualification_type": "RESEARCH",
+	"require_readout_filter_off": true,
+	"channel_compression":
+	{
+		"require_state":"off",
+		"require_number_target_channels": 12
+	}
+  },
+  "parameters": [
+    {
+      "id": "modelId",
+      "type": "string",
+      "label": {
+        "en": "Model"
+      },
+      "information": {
+        "en": "Diffusion model to fit (passed as --Model to Supervised_RNS_dMRI)."
+      },
+      "default": "SANDI"
+    },
+    {
+      "id": "deltaId",
+      "type": "double",
+      "label": {
+        "en": "Delta (ms)"
+      },
+      "information": {
+        "en": "Diffusion gradient separation time, passed as --Delta to Supervised_RNS_dMRI."
+      },
+      "minimum": 0.0,
+      "maximum": 100.0,
+      "default": 23.6
+    },
+    {
+      "id": "smallDeltaId",
+      "type": "double",
+      "label": {
+        "en": "Small Delta (ms)"
+      },
+      "information": {
+        "en": "Diffusion gradient duration, passed as --Small_Delta to Supervised_RNS_dMRI."
+      },
+      "minimum": 0.0,
+      "maximum": 100.0,
+      "default": 7.0
+    }
+  ]
+}

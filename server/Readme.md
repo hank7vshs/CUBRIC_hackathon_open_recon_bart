@@ -24,6 +24,7 @@ The server selects a module at startup via `--or-module`. Each module lives in `
 |---|---|---|
 | `r2ci_bart` *(default)* | Raw-to-complex-image | Buffers k-space per slice and reconstructs using BART (`ecalib` + `pics`). See [`modules/r2ci_bart/Readme.md`](modules/r2ci_bart/Readme.md). |
 | `i2i_invertcontrast` | Image-to-image | Receives magnitude images and inverts their contrast. See [`modules/i2i_invertcontrast/Readme.md`](modules/i2i_invertcontrast/Readme.md). |
+| `supervised_rns_dmri` *(scaffold)* | Image-to-image | Fits a diffusion model using an ML model trained with Realistic Noise Synthesis. Pipeline not yet implemented. See [`modules/supervised_rns_dmri/Readme.md`](modules/supervised_rns_dmri/Readme.md). |
 
 ## Run the Server Directly (No Docker)
 

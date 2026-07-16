@@ -21,6 +21,7 @@ server/              # Packaged into the OpenRecon Docker image
   modules/
     r2ci_bart/       # Raw k-space → complex image via BART (default, main template)
     i2i_invertcontrast/   # Pre-reconstructed images → contrast-inverted images
+    supervised_rns_dmri/  # Pre-reconstructed DWI images → diffusion model fit (scaffold, pipeline not yet implemented)
 client/              # Test client (not deployed to scanner)
   client.py          # Streams .h5 data to server, writes out.h5
   run_client.sh      # Wrapper: choose input dataset here

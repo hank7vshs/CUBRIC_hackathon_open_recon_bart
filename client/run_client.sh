@@ -16,6 +16,8 @@ if [[ "$OR_MODULE" == "r2ci_bart" ]]; then
     #DATA="${DATA_PATH}"/'tse_r2ci_interleaved.h5'
 elif [[ "$OR_MODULE" == "i2i_invertcontrast" ]]; then
     DATA="${DATA_PATH}"/'tse_i2i.h5'
+elif [[ "$OR_MODULE" == "supervised_rns_dmri" ]]; then
+    DATA="${DATA_PATH}"/'tse_i2i.h5'  # placeholder until real DWI test data exists
 else
     echo "Error: Unsupported OR_MODULE '$OR_MODULE'."
     exit 1

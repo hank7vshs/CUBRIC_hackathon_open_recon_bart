@@ -116,7 +116,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--or-module",
-        choices=["i2i_invertcontrast", "r2ci_bart"],
+        choices=["i2i_invertcontrast", "r2ci_bart", "supervised_rns_dmri"],
         help="Processing module to use."
     )
     args = parser.parse_args()
