@@ -24,6 +24,24 @@ Open Recon module (`supervised_rns_dmri`).
    - one 4D blob (nibabel-style) + a JSON sidecar passed through `ui_data`
    Whichever is picked here is what both this conversion script and the module's parsing logic (step 6) must agree on.
 
+   🟡 In progress — found an existing converter, `server/nifti2mrd.py` (adapted from the
+   [open-recon-fetal-brain-measurements](https://github.com/jlautman1/open-recon-fetal-brain-measurements)
+   project), and confirmed it runs end-to-end:
+   ```bash
+   cd server
+   python3 nifti2mrd.py -i ../test/hackathon_data/test.nii.gz -o ../test/hackathon_data/test.h5
+   ```
+   Verified working against `test/hackathon_data/test.nii.gz`, producing `test/hackathon_data/test.h5`.
+
+   What it does: loads a NIfTI volume with `nibabel`, extracts position/orientation from the
+   affine matrix (RAS→LPS conversion), writes one `ismrmrd.Image` per slice into a proper
+   ISMRMRD `Dataset`, and carries filename-derived + orientation metadata via `ismrmrd.Meta`.
+
+   What it does **not** yet handle — still the open item for this step:
+   - Only takes a single 3D volume (`if len(data.shape) == 4: data = data[:, :, :, 0]  # Take first volume`) — a 4D DWI series would need every volume converted, not just the first.
+   - No bval/bvec/mask/noisemap ingestion at all — it has no notion of these files, so the core step-3 decision (per-image `userParameterLong`/`Double` vs. 4D blob + JSON sidecar) is still unresolved.
+   - Next: either extend `nifti2mrd.py` to loop over the 4th (diffusion) dimension and attach bval/bvec per volume, or write a separate DWI-specific converter that calls into this one per-volume once the encoding scheme is picked.
+
 4. **Test on data with a script that handles the data format and auxiliary info**
    This script must call only the **inference/apply** path of the toolbox, not the full `process_all_datasets` → `train_machine_learning_model` → `analyze_all_datasets` pipeline — training offline only, per step 2. Confirm which function in `apply_RF_python.py` / `run_model_fitting.py` is the inference-only entry point before writing this script, since it gets lifted directly into the module in step 6.
 
