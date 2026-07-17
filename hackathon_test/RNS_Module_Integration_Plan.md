@@ -79,8 +79,30 @@ Open Recon module (`supervised_rns_dmri`).
    to disk at each hop — the right trade-off for hackathon time constraints, and both tools turn out
    to already be (or trivially become) in-memory-friendly.
 
-4. **Test on data with a script that handles the data format and auxiliary info**
-   This script must call only the **inference/apply** path of the toolbox, not the full `process_all_datasets` → `train_machine_learning_model` → `analyze_all_datasets` pipeline — training offline only, per step 2. Confirm which function in `apply_RF_python.py` / `run_model_fitting.py` is the inference-only entry point before writing this script, since it gets lifted directly into the module in step 6.
+4. **Test on data with a script that handles the data format and auxiliary info** ✅ Dry-run validated.
+   `server/test_RSN.py` builds `sys.argv` by hand and calls `Supervised_RNS_dMRI.run.main()` directly
+   (see step-2/CLI notes elsewhere in this doc). Two bugs fixed to get a clean dry-run against
+   `hackathon_test/data/sub-06400_*`:
+   - `sys.argv` entries must be one shell "word" each — `"--path-dwi /path/to/file"` as a single
+     combined string is not the same as two separate list elements `"--path-dwi", "/path/to/file"`;
+     argparse silently misparses the combined form and Snakemake tries to `open()` the whole string
+     as a config file path.
+   - `--path-dwi` (the only path-override flag the toolbox exposes — there is no separate flag for
+     bval/bvec/mask/noisemap) requires a wildcard, e.g. `sub-{subject}_dwi.nii.gz`, not a literal
+     path — snakebids needs the wildcard to enumerate subjects. bval/bvec/mask/noisemap are then
+     auto-discovered as sibling files sharing the dwi file's prefix (`sub-06400_dwi.bval`,
+     `sub-06400_brain_mask.nii.gz`, etc.) — which is exactly how `hackathon_test/data/` is already
+     named, no BIDS `sub-X/dwi/` subfolder needed for this single-subject override path.
+
+   With both fixed, `python3 test_RSN.py` (dry-run, `-np`) resolves subject `06400` and produces a
+   clean 5-job DAG: `make_noisemap` → `setup_and_train_model` (checkpoint) → `apply_model` →
+   `collect_done` → `all`.
+
+   **This confirms there is no CLI/argparse-level "inference only" flag** — every run through
+   `Supervised_RNS_dMRI.run.main()` includes `setup_and_train_model`, i.e. it always retrains from
+   whatever subject data it's pointed at. Getting an inference-only path for the live module means
+   calling an internal Python function directly, bypassing this Snakemake driver entirely — see
+   step 6, which now has a confirmed candidate function.
 
 5. **Create a new module** (see `AGENTS.md` → "Adding a New Module", and `.github/agents/new-module.agent.md`). ✅ Scaffolded.
    The agent's 6 steps map onto this plan:
@@ -94,8 +116,30 @@ Open Recon module (`supervised_rns_dmri`).
    | 5. Register + test | step 7 | Registered in `server.py`; pass-through verified via client/server |
    | 6. Update docs | — | `AGENTS.md`, `server/Readme.md`, module `Readme.md` updated. Root `Readme.md` intentionally left untouched — it documents the generic tutorial flow, not this hackathon-specific module |
 
-6. **Integrate the prototype script into the new module**
-   Replace the pass-through body of `_process_image_impl()` in `server/modules/supervised_rns_dmri/supervised_rns_dmri.py` with the working logic from step 4.
+6. **Integrate the prototype script into the new module** 🟡 Scaffolded, logic still TODO.
+   Split across two files rather than crammed into one, so each stage is independently testable
+   with plain arrays/objects (no MRD server needed) the same way `test_RSN.py` already validates
+   the toolbox standalone:
+
+   - **`supervised_rns_dmri.py`** stays MRD-protocol-only. `_process_image_impl()` becomes a thin
+     orchestrator:
+     ```python
+     def _process_image_impl(img_group, ui_data, mrd_header):
+         dwi_nii = rns_inference.mrd_to_nifti(img_group, mrd_header)
+         bval, mask_nii = rns_inference.extract_dwi_aux(img_group, ui_data)
+         result_niis = rns_inference.run_inference(dwi_nii, bval, mask_nii)
+         return rns_inference.nifti_to_mrd_images(result_niis, img_group)
+     ```
+   - **`rns_inference.py`** (new adapter module) — all toolbox-specific logic, four functions:
+     | Function | Does | Status |
+     |---|---|---|
+     | `mrd_to_nifti(img_group, mrd_header)` | Calls `mrd2nii.mrd2nii_main.mrd2nii_volume()` directly — already in-memory | Depends on mrd2nii being installed (see step 3) |
+     | `extract_dwi_aux(img_group, ui_data)` | Pulls bval/bvec/mask out of the MRD stream | Blocked on the still-open step-3 encoding decision |
+     | `run_inference(dwi_nii, bval, mask_nii)` | Ports the ~30 reusable lines of `run_model_fitting.py` (masking/reshaping, SANDI direction-averaging, `fneurite`/`fsoma`/`fextra` derivation) around the one genuinely reusable call: `apply_RF_python(signal, trainedML, log)` — confirmed pure (numpy array + unpickled model dict in, numpy array out, no Snakemake coupling). `run_model_fitting.py` itself is *not* importable — it's a Snakemake `script:` block driven by a magic `snakemake` object, so it's the reference implementation to port, not a library to call. Load `trained_rf.pkl`/`modelinfo.pkl` once, cached at module level, not per-request. | Candidate function confirmed (step 4); upstream direction-averaging step (`SphericalMeanFromSH.py`/`llsFitSH.py`) not yet inspected |
+     | `nifti_to_mrd_images(result_niis, img_group)` | Small refactor of `nifti2mrd.py`'s `convert_nifti_to_ismrmrd()` to accept an in-memory `nib.Nifti1Image` instead of requiring a file path | Not started |
+
+   Net effect: the only disk I/O in the live request path is the one-time model pickle load — every
+   other stage is array/object in, array/object out.
 
 7. **Test at the devcontainer level (client/server)**
    ```bash
@@ -109,5 +153,5 @@ Open Recon module (`supervised_rns_dmri`).
 ## Open decisions blocking step 6
 
 - bval/bvec/mask/noisemap → MRD encoding scheme (step 3)
-- confirmed inference-only entry point in the toolbox (step 4)
+- ~~confirmed inference-only entry point in the toolbox (step 4)~~ ✅ `apply_RF_python(signal, trainedML, log)` confirmed reusable; still need to inspect the SANDI direction-averaging step upstream of it (`SphericalMeanFromSH.py`/`llsFitSH.py`)
 - whether this module ships in the students' copy of the repo, or stays a private reference implementation

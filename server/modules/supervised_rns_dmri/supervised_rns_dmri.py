@@ -22,17 +22,25 @@ Entry point called by server.py:
     ui_data     -- dict of UI parameters from the scanner / test client.
     mrd_header  -- parsed MRD XML header.
 
-Open design decisions (resolve before implementing _process_image_impl):
+The actual toolbox integration lives in rns_inference.py (mrd_to_nifti,
+extract_dwi_aux, run_inference, nifti_to_mrd_images), kept separate from
+this file so each stage is testable with plain arrays/objects, no MRD
+connection needed. See hackathon_test/RNS_Module_Integration_Plan.md step 6
+for the full breakdown and per-stage status.
+
+Open design decisions (resolve before wiring rns_inference into
+_process_image_impl):
     * How do bval/bvec/brain-mask/noisemap reach this module? MRD has no
       native field for any of them. Candidates: per-image userParameter
       entries, or a JSON sidecar delivered via ui_data. Whichever is
-      chosen must match how the .h5 test files are built.
-    * Supervised_RNS_dMRI.workflow.scripts.apply_RF_python (or the
-      equivalent MLP entry point) is the inference-only call -- do not
-      invoke the training/analyze_all_datasets path here, it is far too
-      slow for a per-request reconstruction call. Training happens
-      offline; only the trained pickle files (e.g. trained_rf.pkl,
-      modelinfo.pkl) ship inside the module, under model/.
+      chosen must match how the .h5 test files are built. This is
+      rns_inference.extract_dwi_aux()'s job.
+    * rns_inference.run_inference() calls apply_RF_python() -- the
+      confirmed inference-only entry point -- not the
+      training/analyze_all_datasets path, which is far too slow for a
+      per-request reconstruction call. Training happens offline; only the
+      trained pickle files (e.g. trained_rf.pkl, modelinfo.pkl) ship
+      inside the module, under model/.
 """
 
 import ismrmrd
@@ -148,18 +156,21 @@ def process_image(img_group, ui_data, mrd_header):
 def _process_image_impl(img_group, ui_data, mrd_header):
     """Model-fitting implementation called by process_image().
 
-    TODO (in order):
-      1. Decide and implement how bval/bvec/brain-mask/noisemap are read
-         out of ui_data / per-image userParameters (see module docstring).
-      2. Assemble the DWI volumes in img_group into the 4D array the
-         toolbox expects (nibabel-style [x y z volume]).
-      3. Load the pre-trained model artifacts shipped under model/
-         (e.g. trained_rf.pkl, modelinfo.pkl) -- do not train here.
-      4. Call the toolbox's inference-only entry point (apply_RF_python
-         or equivalent) on the assembled volume.
-      5. Convert the resulting parametric map(s) back into MRD Image
-         objects and return them, following the reslicing pattern used
-         in i2i_invertcontrast._process_image_impl().
+    TODO: once rns_inference.py's four stages are implemented, replace the
+    pass-through body below with:
+
+        dwi_nii = rns_inference.mrd_to_nifti(img_group, mrd_header)
+        bval, mask_nii = rns_inference.extract_dwi_aux(img_group, ui_data)
+        result_niis = rns_inference.run_inference(dwi_nii, bval, mask_nii)
+        return rns_inference.nifti_to_mrd_images(result_niis, img_group)
+
+    Not wired in yet -- all four rns_inference functions currently raise
+    NotImplementedError, and process_image()'s exception handler would
+    turn that into "zero images returned" for every request. Left as a
+    pass-through until enough of the pipeline is real to be worth the
+    behavior change. See rns_inference.py and
+    hackathon_test/RNS_Module_Integration_Plan.md step 6 for per-stage
+    status.
 
     For now this is a pass-through: it returns the input images
     unmodified so the module is testable end-to-end before the model
