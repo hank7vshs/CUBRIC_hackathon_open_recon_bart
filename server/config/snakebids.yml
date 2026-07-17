@@ -1,0 +1,159 @@
+bids_dir: /workspaces/CUBRIC_hackathon_open_recon_bart/test/hackathon_data
+output_dir: /workspaces/CUBRIC_hackathon_open_recon_bart/test/hackathon_data
+debug: false
+derivatives: false
+analysis_levels: &id001
+- participant
+targets_by_analysis_level:
+  participant: &id002
+  - ''
+pybids_inputs:
+  dwi:
+    filters:
+      suffix: dwi
+      extension: .nii.gz
+      datatype: dwi
+    wildcards:
+    - subject
+    - session
+    - acquisition
+    - run
+    custom_path: 
+      /workspaces/CUBRIC_hackathon_open_recon_bart/test/hackathon_data/sub-{subject}_dwi.nii.gz
+parse_args:
+  bids_dir:
+    help: The directory with the input dataset formatted according to the BIDS 
+      standard.
+  output_dir:
+    help: The directory where the output files should be stored. If you are 
+      running group level analysis this folder should be prepopulated with the 
+      results of the participant level analysis.
+  analysis_level:
+    help: Level of the analysis that will be performed.
+    choices: *id001
+  --participant_label:
+    help: The label(s) of the participant(s) that should be analyzed. The label 
+      corresponds to sub-<participant_label> from the BIDS spec (so it does not 
+      include "sub-"). If this parameter is not provided all subjects should be 
+      analyzed. Multiple participants can be specified with a space separated 
+      list.
+    nargs: +
+  --exclude_participant_label:
+    help: The label(s) of the participant(s) that should be excluded. The label 
+      corresponds to sub-<participant_label> from the BIDS spec (so it does not 
+      include "sub-"). If this parameter is not provided all subjects should be 
+      analyzed. Multiple participants can be specified with a space separated 
+      list.
+    nargs: +
+  --derivatives:
+    help: 'Path(s) to a derivatives dataset, for folder(s) that contains multiple
+      derivatives datasets (default: %(default)s) '
+    default: false
+    nargs: +
+  --Model:
+    help: The diffusion model of choice to fit. If -User_model is provided, then
+      you must provide the --path_to_noiseless_signal
+    nargs: 1
+    choices:
+    - User_model
+    - SANDI
+    - NODDI_watson
+    - ball
+    - stick
+    - ball_stick
+    - zeppelin
+    - zeppelin_stick
+    required: true
+  --spherical_mean_fit:
+    help: 'Use this flag if you want to fit the spherical mean of the signal to the
+      model. For SANDI this is the default. If you provide your own signal and parameters
+      array, make sure that any orientation parameter is removed from the *parameter*.npy
+      array (default: %(default)s) '
+    default: false
+    action: store_true
+  --Nset_size:
+    help: ' Size of the training set. Recommended values: 1e4 for testing the performance
+      and between 1e5 and 1e6 for the analysis. Do not use values < 1e4. Values >1e6
+      might lead to out of memory. (default: %(default)s)'
+    default: '1e5'
+  --ML_model:
+    choices:
+    - RF
+    - MLP
+    default:
+    - RF
+    nargs: +
+    help: 'RF for Random Forest; MLP for multi-layer perceptron. If MLP is chosen,
+      it will by default train a MLP for each model parameter. If you want to train
+      a single MLP for the simulatenous prediction of all model parameters, use the
+      --MLP_predict_all flag. The ML training parameters (Dsoma, Din_UB, Rsoma_UB,
+      and De_UB) can (and should) change according to the acquisition (default: %(default)s)'
+  --MLP_predict_all:
+    help: 'When used, it will train a single MLP for the simulatenous prediction of
+      all model parameters, rather than training a MLP for each model parameter seperately
+      (default: %(default)s) '
+    default: false
+    action: store_true
+  --path_to_noiseless_signal:
+    help: 'Path to the nosieless signal file (expect a .npy array). The array should
+      be of the size # of simulations x # of diffusion acquisitons (bval/bvec size.
+      NOTE: Even if the model is for powder averaged data, the inputted signal should
+      still be directional for the noise addition to work correctly). Also expect
+      another array of the parameters to be fit to exist in the directory, of size
+      # of simulations x # of parameters. Will search the directory for a .npy file
+      with the term "parameter". (default: %(default)s) '
+    default: false
+    nargs: +
+  --Delta:
+    help: The diffusion gradient separation ( for PGSE sequence ) in ms. This is
+      assumed the same for all the dataset within the same study. Required for 
+      SANDI fitting.
+    nargs: 1
+    default:
+    - 0
+  --Small_Delta:
+    help: The diffusion gradient duration ( for PGSE sequence ) in ms. This is 
+      assumed the same for all the dataset within the same study. Required for 
+      SANDI fitting.
+    nargs: 1
+    default:
+    - 0
+  --FWHM:
+    help: 'Size of the 3D Gaussian smoothing kernel. If needed, this smooths the input
+      data before analysis (default: %(default)s)'
+    default: 0.001
+metrics:
+- hold
+snakemake_args:
+- --cores
+- all
+- -np
+pybidsdb_reset: false
+pybidsdb_dir:
+pybids_db_dir:
+pybids_db_reset: <!DEPRECATED!>0<!DEPRECATED!>
+snakemake_target: *id002
+analysis_level: participant
+participant_label:
+exclude_participant_label:
+Model:
+- SANDI
+spherical_mean_fit: false
+Nset_size: '1e5'
+ML_model:
+- RF
+MLP_predict_all: false
+path_to_noiseless_signal: false
+Delta:
+- '23.6'
+Small_Delta:
+- '7'
+FWHM: 0.001
+snakemake_version: 7.25.0
+snakebids_version: 0.14.0
+root: ''
+app_version: unknown
+snakemake_dir: 
+  /home/recoon/.local/lib/python3.11/site-packages/Supervised_RNS_dMRI
+snakefile: 
+  /home/recoon/.local/lib/python3.11/site-packages/Supervised_RNS_dMRI/workflow/Snakefile

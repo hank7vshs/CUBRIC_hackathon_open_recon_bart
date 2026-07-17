@@ -801,4 +801,117 @@ Following these steps ensures Docker launches automatically at startup for a sea
 
 ---
 
+## 13. Freeing Disk Space Without Touching a Running Container
+
+A worked example of reclaiming space on a host that's nearly full, while a devcontainer (or any
+long-lived container) stays up the whole time — no `stop`, no `restart`, no risk to whatever's
+running inside it.
+
+### Step 1 — Diagnose before touching anything
+
+```bash
+# Overall host disk usage
+df -h /
+
+# Docker's share of it, broken down by type
+docker system df
+
+# Full breakdown: every image/container/cache entry and its size
+docker system df -v
+```
+
+`docker system df` splits usage into Images / Containers / Local Volumes / Build Cache, each with
+a "RECLAIMABLE" column — that's your budget before deleting anything.
+
+### Step 2 — Safe, zero-risk reclaim first
+
+These never remove anything referenced by an existing image or a running container — `docker rmi`
+and image/builder prune simply refuse (with an error, not data loss) if something is still in use.
+
+```bash
+# Unused build cache layers (often the single biggest win)
+docker builder prune -f
+
+# Dangling (untagged) images only — not "all unused", just orphaned layers
+docker image prune -f
+```
+
+Run `df -h /` again after each command to see real, measured progress rather than trusting the
+"RECLAIMABLE" estimate blindly.
+
+### Step 3 — Remove specific stale images, judgment call by judgment call
+
+List images with `docker images` and check which ones actually back the running container:
+
+```bash
+# Which image is the running container using?
+docker ps --format "table {{.Names}}\t{{.Image}}"
+
+# Per-container writable-layer size vs. total virtual size
+docker ps -s
+```
+
+Then remove old/duplicate images explicitly — **not** a blanket `docker image prune -a`, which
+would also sweep up images you might still want (e.g. a project's own built server image that's
+just not running *right now*). Go one by one:
+
+```bash
+docker rmi old-test-build:latest some-stale-devcontainer-image:latest
+```
+
+Because Docker won't let you remove an image backing a running container, this is safe to attempt
+even for images you're not 100% sure about — worst case it errors out instead of breaking anything.
+
+### Step 4 — Look inside a running container without stopping it
+
+If a running container's writable layer (`docker ps -s`) looks unexpectedly large, `docker exec`
+in and look around — no restart required:
+
+```bash
+# What's actually mounted vs. part of the writable layer?
+docker exec <container> df -h
+docker exec <container> cat /proc/mounts | grep -E "overlay|bind"
+
+# Where's the space going?
+docker exec <container> du -h -d 1 / | sort -rh | head -20
+
+# Common culprits
+docker exec <container> du -sh /var/cache/apt/archives
+docker exec <container> du -sh /root/.cache/pip /home/*/.cache/pip
+
+# Large files still held open by a process after being deleted
+# (invisible to `du`, but still consuming disk until the process exits)
+docker exec <container> sh -c '
+  for fd in /proc/[0-9]*/fd/*; do
+    t=$(readlink "$fd" 2>/dev/null)
+    case "$t" in *"(deleted)"*) echo "$fd -> $t";; esac
+  done'
+```
+
+Check `docker inspect <container> --format='{{range .Mounts}}{{.Type}} {{.Source}} -> {{.Destination}}{{println}}{{end}}'`
+too — bind mounts and named volumes don't count toward the writable-layer size at all, so large
+directories living on a mount aren't part of the number you're chasing.
+
+**Caveat:** if the writable-layer size reported by `docker ps -s` is much bigger than what `du`
+finds inside the container, that gap is often containerd/overlayfs snapshot overhead accumulated
+from the container's own install/upgrade history (packages installed, replaced, removed over its
+uptime). That overhead isn't reclaimable by deleting files from inside — only by recreating the
+container. If you don't want to do that yet, there's nothing unsafe left to try; log the gap and
+move on.
+
+### Example outcome
+
+Following steps 1–3 only (the container itself was left running throughout):
+
+| Stage | Free space | Used % |
+|---|---|---|
+| Before | 1.2G | 98% |
+| After `docker builder prune` + `docker image prune -f` | 5.8G | 90% |
+| After removing specific stale images | 10G | 82% |
+| After a second `docker builder prune -f` (freed once those images were gone) | 15G | 75% |
+
+No image or container in active use was ever touched.
+
+---
+
 **More info:** [Docker Docs](https://docs.docker.com/)

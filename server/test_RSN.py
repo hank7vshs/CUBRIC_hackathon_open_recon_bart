@@ -20,9 +20,11 @@ from Supervised_RNS_dMRI.run import main
 
 sys.argv = [
     "Supervised_RNS_dMRI",
-    "/home/hank7v/dev/CUBRIC_hackathon_open_recon_bart/test/data",
-    "/home/hank7v/dev/CUBRIC_hackathon_open_recon_bart/test/data",
+    "/workspaces/CUBRIC_hackathon_open_recon_bart/test/hackathon_data/",
+    "/workspaces/CUBRIC_hackathon_open_recon_bart/test/hackathon_data/",
     "participant",
+    "--force-output",
+    "--path-dwi", "/workspaces/CUBRIC_hackathon_open_recon_bart/test/hackathon_data/sub-{subject}_dwi.nii.gz",
     "--Model", "SANDI",
     "--Delta", "23.6",
     "--Small_Delta", "7",
@@ -30,4 +32,5 @@ sys.argv = [
     "-np",          # drop this once the dry-run looks right
 ]
 main()
+
 
