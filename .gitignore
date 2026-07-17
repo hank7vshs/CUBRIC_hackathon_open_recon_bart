@@ -7,4 +7,4 @@
 *.DS_Store
 further_materials/04_raw_data_conversion/*.h5
 hackathon_claude_documentations/
-test/hackathon_data
+test/hackathon_data/
