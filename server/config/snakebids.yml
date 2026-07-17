@@ -1,5 +1,7 @@
-bids_dir: /workspaces/CUBRIC_hackathon_open_recon_bart/test/hackathon_data
-output_dir: /workspaces/CUBRIC_hackathon_open_recon_bart/test/hackathon_data
+bids_dir: 
+  /workspaces/CUBRIC_hackathon_open_recon_bart/hackathon_test/hackathon_data
+output_dir: 
+  /workspaces/CUBRIC_hackathon_open_recon_bart/hackathon_test/hackathon_data
 debug: false
 derivatives: false
 analysis_levels: &id001
@@ -19,7 +21,7 @@ pybids_inputs:
     - acquisition
     - run
     custom_path: 
-      /workspaces/CUBRIC_hackathon_open_recon_bart/test/hackathon_data/sub-{subject}_dwi.nii.gz
+      /workspaces/CUBRIC_hackathon_open_recon_bart/hackathon_test/hackathon_data/sub-{subject}_dwi.nii.gz
 parse_args:
   bids_dir:
     help: The directory with the input dataset formatted according to the BIDS 
